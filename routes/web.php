@@ -1,0 +1,73 @@
+<?php
+
+use App\Http\Controllers\AccommodationController;
+use App\Http\Controllers\CultureController;
+use App\Http\Controllers\DestinationController;
+use App\Http\Controllers\EngagementController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\ExploreMapController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ItineraryController;
+use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchSuggestController;
+use App\Http\Controllers\TripPlannerController;
+use App\Http\Controllers\UmkmController;
+use Illuminate\Support\Facades\Route;
+
+// Beranda: satu-satunya halaman yang boleh dibuka tamu.
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Ganti bahasa tampilan (default: Inggris). Boleh diakses tamu maupun pengguna.
+Route::get('bahasa/{locale}', [LocaleController::class, 'update'])->name('locale.update');
+
+// Rute autentikasi publik (login/daftar/reset kata sandi/verifikasi email) — standar Breeze.
+require __DIR__.'/auth.php';
+
+// Halaman publik lainnya: wajib login (tamu dikembalikan ke beranda + popup).
+Route::middleware('public.auth')->group(function (): void {
+    Route::get('/destinasi', [DestinationController::class, 'index'])->name('destinations.index');
+    Route::get('/destinasi/{slug}', [DestinationController::class, 'show'])->name('destinations.show');
+
+    Route::get('/umkm', [UmkmController::class, 'index'])->name('umkm.index');
+    Route::get('/umkm/{slug}', [UmkmController::class, 'show'])->name('umkm.show');
+
+    Route::get('/budaya', [CultureController::class, 'index'])->name('culture.index');
+    Route::get('/budaya/{slug}', [CultureController::class, 'show'])->name('culture.show');
+
+    Route::get('/penginapan', [AccommodationController::class, 'index'])->name('accommodations.index');
+    Route::get('/penginapan/{slug}', [AccommodationController::class, 'show'])->name('accommodations.show');
+
+    Route::get('/event', [EventController::class, 'index'])->name('events.index');
+    Route::get('/event/{slug}', [EventController::class, 'show'])->name('events.show');
+
+    Route::get('/peta', [ExploreMapController::class, 'index'])->name('explore.map');
+
+    // AI Trip Planner (chat bot) — fondasi UI, belum terhubung AI nyata.
+    Route::get('/ai-trip-planner', [TripPlannerController::class, 'index'])->name('trip-planner.index');
+    Route::post('/ai-trip-planner/kirim', [TripPlannerController::class, 'send'])->name('trip-planner.send');
+    Route::delete('/ai-trip-planner', [TripPlannerController::class, 'clear'])->name('trip-planner.clear');
+
+    // Saran pencarian live (mulai 2 huruf).
+    Route::get('/saran/{type}', [SearchSuggestController::class, 'index'])->name('search.suggest');
+
+    // Engagement wisatawan (favorit & ulasan).
+    Route::get('/favorit', [EngagementController::class, 'favorites'])->name('favorites.index');
+    Route::post('/favorit/{type}/{id}', [EngagementController::class, 'toggleFavorite'])->name('favorites.toggle');
+    Route::post('/ulasan/{type}/{id}', [EngagementController::class, 'storeReview'])->name('reviews.store');
+
+    // Rencana perjalanan (itinerary dasar).
+    Route::get('/rencana', [ItineraryController::class, 'index'])->name('itineraries.index');
+    Route::post('/rencana', [ItineraryController::class, 'store'])->name('itineraries.store');
+    Route::get('/rencana/{itinerary}', [ItineraryController::class, 'show'])->name('itineraries.show');
+    Route::delete('/rencana/{itinerary}', [ItineraryController::class, 'destroy'])->name('itineraries.destroy');
+    Route::post('/rencana/{itinerary}/butir/{type}/{id}', [ItineraryController::class, 'addItem'])->name('itineraries.items.store');
+    Route::patch('/rencana/butir/{item}', [ItineraryController::class, 'updateItem'])->name('itineraries.items.update');
+    Route::delete('/rencana/butir/{item}', [ItineraryController::class, 'removeItem'])->name('itineraries.items.destroy');
+    Route::post('/rencana/cepat/{type}/{id}', [ItineraryController::class, 'quickAdd'])->name('itineraries.quick-add');
+
+    // Profil akun (bagian dari autentikasi standar).
+    Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profil', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});

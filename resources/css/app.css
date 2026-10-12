@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-poppins: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+
+    /* Tinggi bottom navbar mobile (mengambang); dipakai untuk memberi ruang
+       pada halaman setinggi layar (mis. chat AI) agar tidak tertutup navbar. */
+    --bottom-nav-height: 4.75rem;
+}
+
+/* Netralkan gaya autofill bawaan browser (Chrome/Safari) agar tema gelap
+   tidak berubah menjadi kuning/putih saat mengisi email yang tersimpan. */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus,
+.auth-input:-webkit-autofill:active {
+    -webkit-text-fill-color: #ffffff;
+    caret-color: #ffffff;
+    /* Latar disimulasikan dengan inset shadow (warna -webkit-autofill-inner tidak bisa dioverride langsung). */
+    -webkit-box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.55) inset;
+    box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.55) inset;
+    transition: background-color 9999s ease-in-out 0s;
+}
