@@ -3,7 +3,9 @@
 namespace App\Services\Concerns;
 
 use App\Enums\ContentStatus;
+use App\Models\Event;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -11,6 +13,9 @@ use InvalidArgumentException;
 /**
  * Logika alur moderasi generik untuk model yang memiliki kolom
  * `status` (cast ke {@see ContentStatus}), `published_at`, dan `rejection_reason`.
+ *
+ * Setiap transisi juga memicu notifikasi in-app (dua arah): moderator diberi
+ * tahu saat ada pengajuan, sedangkan pemilik konten diberi tahu hasil moderasi.
  */
 trait ModeratesContent
 {
@@ -21,12 +26,14 @@ trait ModeratesContent
         $model->rejection_reason = null;
         $model->save();
 
+        app(NotificationService::class)->contentSubmitted($model, auth()->user());
+
         return $model;
     }
 
     public function approve(Model $model, ?User $approver = null): Model
     {
-        return DB::transaction(function () use ($model): Model {
+        $model = DB::transaction(function () use ($model): Model {
             $this->assertTransition($model, [ContentStatus::Pending, ContentStatus::Draft, ContentStatus::Archived]);
             $model->status = ContentStatus::Published;
             $model->published_at = now();
@@ -35,6 +42,16 @@ trait ModeratesContent
 
             return $model;
         });
+
+        $notifications = app(NotificationService::class);
+        $notifications->contentApproved($model);
+
+        // Event yang baru terbit juga diberitahukan ke seluruh pengguna.
+        if ($model instanceof Event) {
+            $notifications->eventPublished($model);
+        }
+
+        return $model;
     }
 
     public function reject(Model $model, string $reason): Model
@@ -49,6 +66,8 @@ trait ModeratesContent
         $model->status = ContentStatus::Rejected;
         $model->rejection_reason = $reason;
         $model->save();
+
+        app(NotificationService::class)->contentRejected($model, $reason);
 
         return $model;
     }

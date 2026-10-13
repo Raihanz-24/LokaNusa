@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Models\UmkmBusiness;
 use App\Models\UmkmProduct;
 use App\Models\User;
+use App\Observers\RecommendationObserver;
 use App\Policies\AccommodationPolicy;
 use App\Policies\CultureArticlePolicy;
 use App\Policies\DestinationPolicy;
@@ -50,5 +51,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Accommodation::class, AccommodationPolicy::class);
         Gate::policy(CultureArticle::class, CultureArticlePolicy::class);
         Gate::policy(Event::class, EventPolicy::class);
+
+        // Pemicu notifikasi "Rekomendasi" (admin highlight).
+        foreach ([Destination::class, UmkmBusiness::class, Accommodation::class, Event::class] as $model) {
+            $model::observe(RecommendationObserver::class);
+        }
     }
 }

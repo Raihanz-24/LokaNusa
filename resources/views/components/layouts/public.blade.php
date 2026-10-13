@@ -67,13 +67,8 @@
             {{-- Switch bahasa --}}
             <x-locale-switch class="hidden shrink-0 sm:inline-flex" variant="light" />
 
-            {{-- Ikon notifikasi --}}
-            <button type="button"
-                    class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-600 transition hover:bg-slate-100"
-                    aria-label="Notifikasi"
-                    @guest data-auth-open @endguest>
-                <x-heroicon name="Bell" class="h-6 w-6" />
-            </button>
+            {{-- Ikon notifikasi (in-app) --}}
+            <x-notification-bell />
 
             {{-- Menu titik-tiga (dropdown) --}}
             <x-public-user-menu />

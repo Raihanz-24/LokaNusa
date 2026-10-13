@@ -39,6 +39,7 @@ class TripPlannerService
         private readonly ItineraryPlanner $planner,
         private readonly ItineraryService $itineraryService,
         private readonly ItineraryPlanWriter $planWriter,
+        private readonly NotificationService $notifications,
     ) {}
 
     /**
@@ -146,6 +147,9 @@ class TripPlannerService
             // Balasan itinerary menyertakan rencana terstruktur (untuk disimpan).
             if ($reply['plan'] !== null) {
                 $this->store($user, 'assistant', $this->planner->toChatMarkdown($reply['plan']), $reply['plan']);
+
+                // Beri tahu pengguna bahwa rencana siap disimpan ke Rencana.
+                $this->notifications->itineraryReady($user, $reply['plan']['title'] ?? null);
             } else {
                 $this->store($user, 'assistant', $reply['text']);
             }

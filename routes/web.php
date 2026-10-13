@@ -9,6 +9,7 @@ use App\Http\Controllers\ExploreMapController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ItineraryController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchSuggestController;
 use App\Http\Controllers\TripPlannerController;
@@ -51,6 +52,13 @@ Route::middleware('public.auth')->group(function (): void {
 
     // Saran pencarian live (mulai 2 huruf).
     Route::get('/saran/{type}', [SearchSuggestController::class, 'index'])->name('search.suggest');
+
+    // Notifikasi in-app (lonceng header + halaman /notifikasi).
+    Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifikasi/feed', [NotificationController::class, 'feed'])->name('notifications.feed');
+    Route::post('/notifikasi/{notification}/baca', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::delete('/notifikasi/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     // Engagement wisatawan (favorit & ulasan).
     Route::get('/favorit', [EngagementController::class, 'favorites'])->name('favorites.index');

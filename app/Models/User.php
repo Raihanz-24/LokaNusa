@@ -158,6 +158,14 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Notifikasi in-app milik pengguna ini.
+     */
+    public function appNotifications(): HasMany
+    {
+        return $this->hasMany(AppNotification::class);
+    }
+
+    /**
      * Kuota prompt AI Trip Planner milik pengguna ini.
      */
     public function tripPlannerUsages(): HasMany

@@ -20,6 +20,12 @@
                 {{ __('ui.menu_profile') }}
             </a>
 
+            <a href="{{ route('notifications.index') }}"
+               class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50">
+                <x-heroicon name="bell" class="h-5 w-5 text-slate-400" />
+                {{ __('ui.menu_notifications') }}
+            </a>
+
             <a href="{{ route('favorites.index') }}"
                class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50">
                 <x-heroicon name="heart" class="h-5 w-5 text-slate-400" />
