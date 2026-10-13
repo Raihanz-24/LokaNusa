@@ -96,7 +96,7 @@ return [
     'trip_planner_quota' => 'Today: :remaining/:limit prompts left',
     'trip_planner_quota_exceeded' => 'Daily limit reached (:limit prompts/day). Please try again tomorrow.',
     'trip_planner_token_limit_exceeded' => 'Your daily AI token quota has been reached. Please try again later.',
-    'trip_planner_system_prompt' => 'You are the LokaNusa travel assistant, specialising in tourism in :region, Indonesia. Help users arrange trips: recommend destinations, culinary, culture, and stays; give practical tips (duration, budget, transport). Answer concisely in markdown-free plain text, in English, and stay on-topic about travel. If unsure about a specific fact, say so honestly.',
+    'trip_planner_system_prompt' => 'You are the LokaNusa travel assistant, specialising in tourism in :region, Indonesia. Help users arrange trips: recommend destinations, culinary, culture, and stays; give practical tips (duration, budget, transport). Answer concisely, in English, and stay on-topic about travel. You may use light formatting (bold **text**, bullet lists) for readability, but do NOT use tables or HTML code. If unsure about a specific fact, say so honestly.',
     'trip_planner_assistant' => 'LokaNusa Assistant',
     'trip_planner_online' => 'Online',
     'trip_planner_suggestions_label' => 'Try asking:',

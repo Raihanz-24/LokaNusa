@@ -47,7 +47,7 @@
                 <div class="mx-auto flex max-w-3xl flex-col gap-3 px-4 py-4">
                     <div data-chat-messages class="flex flex-col gap-3" aria-live="polite">
                         @foreach ($initial as $message)
-                            <x-chat-bubble :role="$message['role']" :text="$message['text']" :time="$message['time'] ?? null" />
+                            <x-chat-bubble :role="$message['role']" :text="$message['text']" :html="$message['html'] ?? null" :time="$message['time'] ?? null" />
                         @endforeach
                     </div>
 
@@ -178,7 +178,7 @@
                         return new Date().toTimeString().slice(0, 5);
                     }
 
-                    function bubble(role, text, time) {
+                    function bubble(role, text, time, html) {
                         var isUser = role === 'user';
                         var wrap = document.createElement('div');
                         wrap.className = 'flex ' + (isUser ? 'justify-end' : 'justify-start');
@@ -187,9 +187,14 @@
                         inner.className = 'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ' +
                             (isUser ? 'rounded-br-sm bg-emerald-600 text-white' : 'rounded-bl-sm bg-white text-slate-700');
 
-                        var body = document.createElement('p');
-                        body.className = 'whitespace-pre-line break-words';
-                        body.textContent = text;
+                        var body = document.createElement('div');
+                        body.className = 'chat-body break-words';
+                        if (html) {
+                            // HTML sudah aman (di-render server-side oleh MarkdownLite).
+                            body.innerHTML = html;
+                        } else {
+                            body.textContent = text;
+                        }
                         inner.appendChild(body);
 
                         if (time) {
@@ -206,13 +211,13 @@
                     function render(messages) {
                         wall.innerHTML = '';
                         (messages || []).forEach(function (m) {
-                            wall.appendChild(bubble(m.role, m.text, m.time));
+                            wall.appendChild(bubble(m.role, m.text, m.time, m.html));
                         });
                         scrollDown();
                     }
 
-                    function appendMessage(role, text, time) {
-                        wall.appendChild(bubble(role, text, time));
+                    function appendMessage(role, text, time, html) {
+                        wall.appendChild(bubble(role, text, time, html));
                         scrollDown();
                     }
 

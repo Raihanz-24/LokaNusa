@@ -8,6 +8,7 @@ use App\Models\TripPlannerMessage;
 use App\Models\TripPlannerUsage;
 use App\Models\User;
 use App\Services\Ai\AiClient;
+use App\Support\MarkdownLite;
 use App\Support\RegionResolver;
 use Illuminate\Support\Facades\DB;
 
@@ -36,7 +37,10 @@ class TripPlannerService
     /**
      * Ambil seluruh pesan percakapan milik pengguna (paling lama -> terbaru).
      *
-     * @return array<int, array{role: string, text: string, time: string}>
+     * `html` = versi aman untuk dirender (balasan asisten memakai gaya ringan,
+     * pesan pengguna sebagai teks biasa). `text` tetap disertakan apa adanya.
+     *
+     * @return array<int, array{role: string, text: string, html: string, time: string}>
      */
     public function messages(User $user): array
     {
@@ -46,6 +50,9 @@ class TripPlannerService
             ->map(fn (TripPlannerMessage $message): array => [
                 'role' => $message->role,
                 'text' => $message->content,
+                'html' => $message->role === 'user'
+                    ? MarkdownLite::plain($message->content)
+                    : MarkdownLite::render($message->content),
                 'time' => $message->created_at?->format('H:i') ?? now()->format('H:i'),
             ])
             ->all();

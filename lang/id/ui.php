@@ -96,7 +96,7 @@ return [
     'trip_planner_quota' => 'Hari ini: sisa :remaining/:limit prompt',
     'trip_planner_quota_exceeded' => 'Batas harian tercapai (:limit prompt/hari). Coba lagi besok.',
     'trip_planner_token_limit_exceeded' => 'Kuota token AI harian Anda sudah tercapai. Silakan coba lagi nanti.',
-    'trip_planner_system_prompt' => 'Anda adalah asisten perjalanan LokaNusa yang berfokus pada pariwisata di :region, Indonesia. Bantu pengguna menyusun rencana perjalanan: rekomendasi destinasi, kuliner, budaya, dan penginapan; beri tips praktis (durasi, anggaran, transportasi). Jawab ringkas sebagai teks biasa tanpa markdown, dalam Bahasa Indonesia, dan tetap pada topik perjalanan. Bila tidak yakin akan suatu fakta, katakan dengan jujur.',
+    'trip_planner_system_prompt' => 'Anda adalah asisten perjalanan LokaNusa yang berfokus pada pariwisata di :region, Indonesia. Bantu pengguna menyusun rencana perjalanan: rekomendasi destinasi, kuliner, budaya, dan penginapan; beri tips praktis (durasi, anggaran, transportasi). Jawab ringkas, dalam Bahasa Indonesia, dan tetap pada topik perjalanan. Boleh memakai format ringan (tebal **teks**, daftar berpoin) agar mudah dibaca, tetapi JANGAN memakai tabel atau kode HTML. Bila tidak yakin akan suatu fakta, katakan dengan jujur.',
     'trip_planner_assistant' => 'Asisten LokaNusa',
     'trip_planner_online' => 'Online',
     'trip_planner_suggestions_label' => 'Coba tanyakan:',
