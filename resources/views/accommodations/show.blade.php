@@ -112,8 +112,63 @@
                     @endif
                 </div>
 
-                <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
-                    Pemesanan/pembayaran daring belum tersedia. Silakan hubungi penginapan langsung.
+                <div class="rounded-2xl border border-slate-200 bg-white p-5">
+                    <div class="mb-3 flex items-center justify-between">
+                        <h2 class="font-semibold text-slate-900">Pesan Menginap</h2>
+                        <span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">DEMO</span>
+                    </div>
+
+                    @if (session('status'))
+                        <p class="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{{ session('status') }}</p>
+                    @endif
+
+                    @error('booking')
+                        <p class="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ $message }}</p>
+                    @enderror
+
+                    @if ($accommodation->price_per_night)
+                        <form method="POST" action="{{ route('bookings.store-accommodation', $accommodation) }}" class="space-y-3">
+                            @csrf
+                            <div>
+                                <label class="text-sm font-medium text-slate-700" for="bk-start">Check-in</label>
+                                <input id="bk-start" type="date" name="start_date" required min="{{ now()->toDateString() }}"
+                                       value="{{ old('start_date') }}"
+                                       class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700" for="bk-end">Check-out</label>
+                                <input id="bk-end" type="date" name="end_date" required min="{{ now()->addDay()->toDateString() }}"
+                                       value="{{ old('end_date') }}"
+                                       class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700" for="bk-name">Nama pemesan</label>
+                                <input id="bk-name" type="text" name="contact_name" required maxlength="100"
+                                       value="{{ old('contact_name', auth()->user()->name) }}"
+                                       class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700" for="bk-phone">No. HP / WhatsApp</label>
+                                <input id="bk-phone" type="text" name="contact_phone" required maxlength="30"
+                                       value="{{ old('contact_phone') }}" placeholder="08xxxxxxxxxx"
+                                       class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700" for="bk-note">Catatan (opsional)</label>
+                                <textarea id="bk-note" name="note" rows="2" maxlength="500"
+                                          class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">{{ old('note') }}</textarea>
+                            </div>
+                            <button type="submit"
+                                    class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                Pesan Sekarang
+                            </button>
+                            <p class="text-center text-xs text-slate-500">
+                                Pembayaran hanya <strong>simulasi (demo)</strong> — tidak ada transaksi nyata.
+                            </p>
+                        </form>
+                    @else
+                        <p class="text-sm text-slate-500">Pemesanan daring belum tersedia. Silakan hubungi penginapan langsung.</p>
+                    @endif
                 </div>
             </aside>
         </div>

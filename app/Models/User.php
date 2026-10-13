@@ -166,6 +166,22 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Pesanan (booking demo) yang dibuat pengguna ini.
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Pesanan yang masuk untuk usaha milik pengguna ini (penginapan/UMKM).
+     */
+    public function ownedBookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'owner_id');
+    }
+
+    /**
      * Kuota prompt AI Trip Planner milik pengguna ini.
      */
     public function tripPlannerUsages(): HasMany

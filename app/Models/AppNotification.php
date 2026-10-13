@@ -35,6 +35,8 @@ class AppNotification extends Model
 
     public const TYPE_AI = 'ai';
 
+    public const TYPE_BOOKING = 'booking';
+
     protected $fillable = [
         'user_id',
         'type',

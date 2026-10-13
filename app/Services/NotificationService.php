@@ -6,11 +6,13 @@ use App\Enums\Permission;
 use App\Enums\UserRole;
 use App\Models\Accommodation;
 use App\Models\AppNotification;
+use App\Models\Booking;
 use App\Models\CultureArticle;
 use App\Models\Destination;
 use App\Models\Event;
 use App\Models\UmkmBusiness;
 use App\Models\User;
+use App\Support\Rupiah;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -256,6 +258,59 @@ class NotificationService
             route('trip-planner.index'),
             'sparkles',
         );
+    }
+
+    /**
+     * Pesanan DEMO baru dibuat -> beri tahu pemilik usaha (penginapan/UMKM).
+     */
+    public function bookingCreated(Booking $booking): void
+    {
+        $owner = $booking->owner;
+
+        if ($owner === null) {
+            return;
+        }
+
+        $this->notify(
+            $owner,
+            AppNotification::TYPE_BOOKING,
+            __('ui.notif_booking_new_title'),
+            __('ui.notif_booking_new_body', [
+                'item' => $this->bookingItemName($booking),
+                'buyer' => $booking->contact_name,
+            ]),
+            route('bookings.show', $booking->code),
+            'shopping-bag',
+        );
+    }
+
+    /**
+     * Pembayaran DEMO selesai -> beri tahu pemilik usaha.
+     */
+    public function bookingPaid(Booking $booking): void
+    {
+        $owner = $booking->owner;
+
+        if ($owner === null) {
+            return;
+        }
+
+        $this->notify(
+            $owner,
+            AppNotification::TYPE_BOOKING,
+            __('ui.notif_booking_paid_title'),
+            __('ui.notif_booking_paid_body', [
+                'item' => $this->bookingItemName($booking),
+                'total' => Rupiah::label($booking->total_price),
+            ]),
+            route('bookings.show', $booking->code),
+            'shopping-bag',
+        );
+    }
+
+    private function bookingItemName(Booking $booking): string
+    {
+        return (string) ($booking->bookable?->name ?? __('ui.booking_item'));
     }
 
     /*

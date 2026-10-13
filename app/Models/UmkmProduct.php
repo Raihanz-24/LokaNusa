@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ContentStatus;
+use App\Models\Concerns\HasBookings;
 use Database\Factories\UmkmProductFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Support\Str;
 class UmkmProduct extends Model
 {
     /** @use HasFactory<UmkmProductFactory> */
-    use HasFactory;
+    use HasBookings, HasFactory;
 
     protected $fillable = [
         'umkm_business_id',

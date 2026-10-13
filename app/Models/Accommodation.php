@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AccommodationType;
 use App\Enums\ContentStatus;
+use App\Models\Concerns\HasBookings;
 use App\Models\Concerns\HasFavorites;
 use App\Models\Concerns\HasItineraryItems;
 use App\Models\Concerns\HasReviews;
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
 class Accommodation extends Model
 {
     /** @use HasFactory<AccommodationFactory> */
-    use HasFactory, HasFavorites, HasItineraryItems, HasReviews;
+    use HasBookings, HasFactory, HasFavorites, HasItineraryItems, HasReviews;
 
     protected $fillable = [
         'manager_id',

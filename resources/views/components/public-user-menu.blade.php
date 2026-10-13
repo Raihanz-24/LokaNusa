@@ -44,6 +44,12 @@
                 {{ __('ui.menu_itineraries') }}
             </a>
 
+            <a href="{{ route('bookings.index') }}"
+               class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50">
+                <x-heroicon name="shopping-bag" class="h-5 w-5 text-slate-400" />
+                {{ __('ui.menu_bookings') }}
+            </a>
+
             {{-- Item menu tambahan dapat ditambahkan di sini. --}}
 
             <form method="POST" action="{{ route('logout') }}">

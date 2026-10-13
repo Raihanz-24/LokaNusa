@@ -69,6 +69,7 @@ return [
     'menu_profile' => 'My Profile',
     'menu_favorites' => 'My Favorites',
     'menu_itineraries' => 'Trip Plans',
+    'menu_bookings' => 'My Orders',
     'menu_trip_planner' => 'AI Trip Planner',
     'menu_sign_in' => 'Sign in',
     'menu_create_account' => 'Create Account',
@@ -299,4 +300,19 @@ return [
     'notif_ai_plan_title' => 'Your AI plan is ready to save',
     'notif_ai_plan_body' => 'AI Trip Planner built a trip plan for you. Open it to save it to your Rencana.',
     'notif_ai_plan_body_named' => 'The plan ":title" is ready to save to your trip plans.',
+    'notif_booking_new_title' => 'New order (demo)',
+    'notif_booking_new_body' => ':buyer ordered ":item". Open for details (demo).',
+    'notif_booking_paid_title' => 'Order paid (demo)',
+    'notif_booking_paid_body' => 'Order ":item" was marked paid (demo) for :total.',
+
+    // Demo bookings.
+    'booking_item' => 'item',
+    'booking_created' => 'Demo order created. Continue to (simulated) payment.',
+    'booking_paid' => 'Demo payment successful. Order marked as paid.',
+    'booking_cancelled' => 'Order cancelled.',
+    'booking_date_invalid' => 'Check-out date must be after the check-in date.',
+    'booking_price_missing' => 'This item has no price yet and cannot be ordered.',
+    'booking_method_invalid' => 'Unknown payment method.',
+    'booking_already_cancelled' => 'This order has already been cancelled.',
+    'booking_paid_cannot_cancel' => 'A paid order cannot be cancelled.',
 ];

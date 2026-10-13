@@ -78,6 +78,34 @@
                                             Rp{{ number_format($product->price, 0, ',', '.') }}
                                             <span class="text-sm font-normal text-slate-500">/ {{ $product->unit ?? 'pcs' }}</span>
                                         </p>
+
+                                        @if ($product->is_available)
+                                            <details class="mt-2 group">
+                                                <summary class="cursor-pointer list-none rounded-lg bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                                    Beli (Demo)
+                                                </summary>
+                                                <form method="POST" action="{{ route('bookings.store-product', $product) }}"
+                                                      class="mt-2 space-y-2 border-t border-slate-100 pt-3">
+                                                    @csrf
+                                                    <div class="flex items-center gap-2">
+                                                        <label class="text-sm text-slate-600" for="qty-{{ $product->id }}">Jumlah</label>
+                                                        <input id="qty-{{ $product->id }}" type="number" name="quantity" value="1" min="1" max="1000"
+                                                               class="w-20 rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                                                    </div>
+                                                    <input type="text" name="contact_name" required maxlength="100"
+                                                           value="{{ old('contact_name', auth()->user()->name) }}" placeholder="Nama pemesan"
+                                                           class="w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                                                    <input type="text" name="contact_phone" required maxlength="30"
+                                                           value="{{ old('contact_phone') }}" placeholder="No. HP / WhatsApp"
+                                                           class="w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                                                    <button type="submit"
+                                                            class="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                                        Pesan (Demo)
+                                                    </button>
+                                                    <p class="text-center text-xs text-slate-500">Pembayaran simulasi, bukan nyata.</p>
+                                                </form>
+                                            </details>
+                                        @endif
                                     </div>
                                 </article>
                             @endforeach

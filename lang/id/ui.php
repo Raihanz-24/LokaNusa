@@ -69,6 +69,7 @@ return [
     'menu_profile' => 'Profil Saya',
     'menu_favorites' => 'Favorit Saya',
     'menu_itineraries' => 'Rencana Perjalanan',
+    'menu_bookings' => 'Pesanan Saya',
     'menu_trip_planner' => 'AI Trip Planner',
     'menu_sign_in' => 'Masuk',
     'menu_create_account' => 'Buat Akun',
@@ -299,4 +300,19 @@ return [
     'notif_ai_plan_title' => 'Rencana AI siap disimpan',
     'notif_ai_plan_body' => 'AI Trip Planner menyusun rencana perjalanan untuk Anda. Buka untuk menyimpannya ke Rencana.',
     'notif_ai_plan_body_named' => 'Rencana ":title" siap disimpan ke Rencana perjalanan Anda.',
+    'notif_booking_new_title' => 'Pesanan baru (demo)',
+    'notif_booking_new_body' => ':buyer memesan ":item". Buka untuk detail (demo).',
+    'notif_booking_paid_title' => 'Pesanan dibayar (demo)',
+    'notif_booking_paid_body' => 'Pesanan ":item" ditandai lunas (demo) senilai :total.',
+
+    // Pemesanan (booking) demo.
+    'booking_item' => 'konten',
+    'booking_created' => 'Pesanan demo dibuat. Lanjutkan ke pembayaran (simulasi).',
+    'booking_paid' => 'Pembayaran demo berhasil. Pesanan ditandai lunas.',
+    'booking_cancelled' => 'Pesanan dibatalkan.',
+    'booking_date_invalid' => 'Tanggal check-out harus setelah tanggal check-in.',
+    'booking_price_missing' => 'Konten ini belum memiliki harga, tidak bisa dipesan.',
+    'booking_method_invalid' => 'Metode pembayaran tidak dikenali.',
+    'booking_already_cancelled' => 'Pesanan sudah dibatalkan.',
+    'booking_paid_cannot_cancel' => 'Pesanan yang sudah dibayar tidak dapat dibatalkan.',
 ];
