@@ -65,9 +65,17 @@ class RegionAndCategoryTest extends TestCase
         Livewire::test(ListDestinationCategories::class)->assertSuccessful();
     }
 
-    public function test_pengelola_destinasi_boleh_kelola_kategori(): void
+    public function test_pemilik_destinasi_tidak_boleh_kelola_kategori(): void
     {
-        $this->actingAs(User::factory()->role(UserRole::PengelolaDestinasi)->create());
+        // Kategori = data referensi; pemilik usaha tidak mengelolanya.
+        $this->actingAs(User::factory()->role(UserRole::PemilikDestinasi)->create());
+
+        $this->get('/admin/destination-categories')->assertForbidden();
+    }
+
+    public function test_pengelola_lokanusa_boleh_kelola_kategori(): void
+    {
+        $this->actingAs(User::factory()->pengelolaLokanusa()->create());
 
         $this->get('/admin/destination-categories')->assertSuccessful();
     }

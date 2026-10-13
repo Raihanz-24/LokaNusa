@@ -18,6 +18,11 @@ class ContentTrendChart extends ChartWidget
 
     protected ?string $maxHeight = '260px';
 
+    public static function canView(): bool
+    {
+        return auth()->user()?->managesAllContent() ?? false;
+    }
+
     protected function getData(): array
     {
         $trend = app(DashboardService::class)->contentTrend(6);

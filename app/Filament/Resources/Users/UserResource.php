@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
@@ -13,6 +14,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class UserResource extends Resource
 {
@@ -38,6 +41,20 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return UsersTable::configure($table);
+    }
+
+    /**
+     * Akun Developer (Super Admin) disembunyikan dari peran di bawahnya.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (! Auth::user()?->isSuperAdmin()) {
+            $query->where('role', '!=', UserRole::SuperAdmin->value);
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array

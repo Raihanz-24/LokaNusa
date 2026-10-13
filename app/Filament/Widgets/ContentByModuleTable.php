@@ -18,6 +18,11 @@ class ContentByModuleTable extends TableWidget
 
     protected int|string|array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        return auth()->user()?->managesAllContent() ?? false;
+    }
+
     public function table(Table $table): Table
     {
         $stats = collect(app(DashboardService::class)->contentStats())

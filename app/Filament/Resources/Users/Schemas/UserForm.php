@@ -55,25 +55,20 @@ class UserForm
                             ->numeric()
                             ->minValue(1)
                             ->placeholder('Tanpa batas')
+                            ->visible(fn (): bool => Auth::user()?->isSuperAdmin() ?? false)
                             ->helperText('Batas token AI harian untuk pengguna ini. Kosongkan untuk tanpa batas.'),
                     ]),
             ]);
     }
 
     /**
-     * Opsi peran. Hanya Developer yang boleh menetapkan peran Developer
-     * (mencegah eskalasi hak akses oleh pengelola pengguna lain).
+     * Opsi peran. Peran Developer (Super Admin) hanya tampil bila pengakses
+     * adalah Developer (mencegah eskalasi hak akses & menjaga kerahasiaan).
      *
      * @return array<string, string>
      */
     private static function roleOptions(): array
     {
-        $options = UserRole::options();
-
-        if (! Auth::user()?->isSuperAdmin()) {
-            unset($options[UserRole::SuperAdmin->value]);
-        }
-
-        return $options;
+        return UserRole::options(Auth::user()?->role);
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\DestinationCategories;
 
-use App\Enums\Permission;
 use App\Filament\Resources\DestinationCategories\Pages\CreateDestinationCategory;
 use App\Filament\Resources\DestinationCategories\Pages\EditDestinationCategory;
 use App\Filament\Resources\DestinationCategories\Pages\ListDestinationCategories;
@@ -14,7 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 class DestinationCategoryResource extends Resource
 {
@@ -44,7 +43,9 @@ class DestinationCategoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(Permission::ManageDestinations->value);
+        // Kategori destinasi = data referensi; hanya pengelola seluruh konten
+        // (bukan pemilik usaha) yang boleh mengelolanya.
+        return Auth::user()?->managesAllContent() ?? false;
     }
 
     public static function getRelations(): array

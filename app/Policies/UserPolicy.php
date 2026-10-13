@@ -14,6 +14,11 @@ class UserPolicy
 
     public function view(User $user, User $model): bool
     {
+        // Akun Developer (Super Admin) hanya terlihat oleh Developer lain.
+        if ($model->isSuperAdmin() && ! $user->isSuperAdmin()) {
+            return false;
+        }
+
         return $user->hasPermission(Permission::ManageUsers);
     }
 

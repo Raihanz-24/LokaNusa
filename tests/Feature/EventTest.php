@@ -112,8 +112,21 @@ class EventTest extends TestCase
 
     public function test_pengelola_event_hanya_mengelola_eventnya(): void
     {
-        $pengelola = User::factory()->pengelolaEvent()->create();
-        $lain = User::factory()->pengelolaEvent()->create();
+        // Event kini tidak punya peran pemilik khusus; hanya admin/pengelola
+        // lokanusa yang mengelolanya.
+        $pemilik = User::factory()->pemilikDestinasi()->create();
+
+        $this->assertFalse($pemilik->hasPermission(Permission::ManageEvents));
+        $this->assertFalse(EventResource::canViewAny());
+
+        $this->actingAs($pemilik);
+        $this->assertFalse(EventResource::canViewAny());
+    }
+
+    public function test_pengelola_lokanusa_dapat_mengelola_semua_event(): void
+    {
+        $pengelola = User::factory()->pengelolaLokanusa()->create();
+        $lain = User::factory()->pengelolaLokanusa()->create();
 
         $milik = Event::factory()->create(['organizer_id' => $pengelola->id]);
         $bukanMilik = Event::factory()->create(['organizer_id' => $lain->id]);
@@ -121,12 +134,12 @@ class EventTest extends TestCase
         $policy = new EventPolicy;
 
         $this->assertTrue($policy->update($pengelola, $milik));
-        $this->assertFalse($policy->update($pengelola, $bukanMilik));
-        $this->assertFalse($policy->moderate($pengelola, $milik));
+        $this->assertTrue($policy->update($pengelola, $bukanMilik));
+        $this->assertTrue($policy->moderate($pengelola, $milik));
 
         $this->actingAs($pengelola);
         $this->assertTrue(EventResource::canViewAny());
-        $this->assertSame(1, EventResource::getEloquentQuery()->count());
+        $this->assertSame(2, EventResource::getEloquentQuery()->count());
 
         $this->assertTrue($pengelola->hasPermission(Permission::ManageEvents));
         $this->assertTrue($pengelola->canAccessPanel(filament()->getDefaultPanel()));

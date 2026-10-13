@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Enums\Permission;
-use App\Enums\UserRole;
 use App\Models\Event;
 use App\Models\User;
 
@@ -34,8 +33,9 @@ class EventPolicy
             return true;
         }
 
-        return $user->role === UserRole::PengelolaEvent
-            && $event->organizer_id === $user->getKey();
+        // Event tidak lagi punya peran pemilik khusus; hanya admin yang
+        // mengelolanya lintas konten.
+        return false;
     }
 
     public function delete(User $user, Event $event): bool

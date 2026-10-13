@@ -13,6 +13,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class DestinationForm
 {
@@ -46,6 +47,7 @@ class DestinationForm
                             ->relationship('manager', 'name')
                             ->searchable()
                             ->native(false)
+                            ->visible(fn (): bool => Auth::user()?->managesAllContent() ?? false)
                             ->helperText('Pengguna yang bertanggung jawab (opsional).'),
 
                         Textarea::make('description')
@@ -122,6 +124,7 @@ class DestinationForm
 
                 Section::make('Rekomendasi Beranda')
                     ->columns(2)
+                    ->visible(fn (): bool => Auth::user()?->managesAllContent() ?? false)
                     ->schema([
                         Toggle::make('is_recommended')
                             ->label('Tampilkan di "Rekomendasi untukmu"')

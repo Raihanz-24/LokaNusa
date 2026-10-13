@@ -101,9 +101,9 @@ class FoundationScopeTest extends TestCase
 
     public function test_pengelola_penginapan_ownership_dan_admin_moderasi(): void
     {
-        $pengelola = User::factory()->pengelolaPenginapan()->create();
-        $lain = User::factory()->pengelolaPenginapan()->create();
-        $admin = User::factory()->adminWilayah()->create();
+        $pengelola = User::factory()->pemilikPenginapan()->create();
+        $lain = User::factory()->pemilikPenginapan()->create();
+        $admin = User::factory()->pengelolaLokanusa()->create();
 
         $milik = Accommodation::factory()->create(['manager_id' => $pengelola->id]);
         $bukanMilik = Accommodation::factory()->create(['manager_id' => $lain->id]);

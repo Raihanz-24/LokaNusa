@@ -35,7 +35,7 @@ class DestinationPolicy
             return true;
         }
 
-        return $user->role === UserRole::PengelolaDestinasi
+        return $user->role === UserRole::PemilikDestinasi
             && $destination->manager_id === $user->getKey();
     }
 

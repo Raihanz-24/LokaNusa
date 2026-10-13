@@ -14,6 +14,7 @@ use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class UmkmBusinessForm
 {
@@ -109,6 +110,7 @@ class UmkmBusinessForm
 
                 Section::make('Rekomendasi Beranda')
                     ->columns(2)
+                    ->visible(fn (): bool => Auth::user()?->managesAllContent() ?? false)
                     ->schema([
                         Toggle::make('is_recommended')
                             ->label('Tampilkan di "Rekomendasi untukmu"')

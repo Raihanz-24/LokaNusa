@@ -53,14 +53,14 @@ class UserFactory extends Factory
         return $this->role(UserRole::AdminPemerintah);
     }
 
-    public function adminWilayah(): static
+    public function pengelolaLokanusa(): static
     {
-        return $this->role(UserRole::AdminWilayah);
+        return $this->role(UserRole::PengelolaLokanusa);
     }
 
-    public function pengelolaDestinasi(): static
+    public function pemilikDestinasi(): static
     {
-        return $this->role(UserRole::PengelolaDestinasi);
+        return $this->role(UserRole::PemilikDestinasi);
     }
 
     public function pemilikUmkm(): static
@@ -68,19 +68,14 @@ class UserFactory extends Factory
         return $this->role(UserRole::PemilikUmkm);
     }
 
-    public function pengelolaPenginapan(): static
+    public function pemilikPenginapan(): static
     {
-        return $this->role(UserRole::PengelolaPenginapan);
+        return $this->role(UserRole::PemilikPenginapan);
     }
 
     public function kontributorBudaya(): static
     {
         return $this->role(UserRole::KontributorBudaya);
-    }
-
-    public function pengelolaEvent(): static
-    {
-        return $this->role(UserRole::PengelolaEvent);
     }
 
     public function wisatawan(): static

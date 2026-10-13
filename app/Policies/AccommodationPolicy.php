@@ -34,7 +34,7 @@ class AccommodationPolicy
             return true;
         }
 
-        return $user->role === UserRole::PengelolaPenginapan
+        return $user->role === UserRole::PemilikPenginapan
             && $accommodation->manager_id === $user->getKey();
     }
 

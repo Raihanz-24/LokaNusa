@@ -59,8 +59,8 @@ class NotificationTest extends TestCase
 
     public function test_pengajuan_konten_memberi_tahu_moderator(): void
     {
-        $moderator = User::factory()->adminWilayah()->create();
-        $pengelola = User::factory()->pengelolaDestinasi()->create();
+        $moderator = User::factory()->pengelolaLokanusa()->create();
+        $pengelola = User::factory()->pemilikDestinasi()->create();
 
         $destination = Destination::factory()->create([
             'manager_id' => $pengelola->id,
@@ -81,8 +81,8 @@ class NotificationTest extends TestCase
 
     public function test_hasil_moderasi_memberi_tahu_pemilik_konten(): void
     {
-        $moderator = User::factory()->adminWilayah()->create();
-        $pengelola = User::factory()->pengelolaDestinasi()->create();
+        $moderator = User::factory()->pengelolaLokanusa()->create();
+        $pengelola = User::factory()->pemilikDestinasi()->create();
 
         $destination = Destination::factory()->create([
             'manager_id' => $pengelola->id,
@@ -100,8 +100,8 @@ class NotificationTest extends TestCase
 
     public function test_penolakan_memuat_alasan(): void
     {
-        $moderator = User::factory()->adminWilayah()->create();
-        $pengelola = User::factory()->pengelolaDestinasi()->create();
+        $moderator = User::factory()->pengelolaLokanusa()->create();
+        $pengelola = User::factory()->pemilikDestinasi()->create();
 
         $destination = Destination::factory()->create([
             'manager_id' => $pengelola->id,
@@ -117,7 +117,7 @@ class NotificationTest extends TestCase
 
     public function test_event_terbit_memberi_tahu_seluruh_pengguna(): void
     {
-        $organizer = User::factory()->pengelolaEvent()->create();
+        $organizer = User::factory()->pengelolaLokanusa()->create();
         $wisatawan = $this->wisatawan();
 
         $event = Event::factory()->create(['organizer_id' => $organizer->id]);
@@ -138,7 +138,7 @@ class NotificationTest extends TestCase
 
     public function test_menandai_rekomendasi_memberi_tahu_pemilik(): void
     {
-        $pengelola = User::factory()->pengelolaDestinasi()->create();
+        $pengelola = User::factory()->pemilikDestinasi()->create();
         $focus = Region::factory()->create();
         AppSetting::setFocusRegion($focus->id);
 

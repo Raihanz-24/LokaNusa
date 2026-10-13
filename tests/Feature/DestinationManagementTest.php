@@ -109,8 +109,8 @@ class DestinationManagementTest extends TestCase
 
     public function test_pengelola_hanya_boleh_mengubah_destinasi_miliknya(): void
     {
-        $pengelola = User::factory()->pengelolaDestinasi()->create();
-        $lain = User::factory()->pengelolaDestinasi()->create();
+        $pengelola = User::factory()->pemilikDestinasi()->create();
+        $lain = User::factory()->pemilikDestinasi()->create();
 
         $milik = Destination::factory()->create(['manager_id' => $pengelola->id]);
         $bukanMilik = Destination::factory()->create(['manager_id' => $lain->id]);
@@ -136,7 +136,7 @@ class DestinationManagementTest extends TestCase
 
     public function test_pengelola_tidak_boleh_moderasi(): void
     {
-        $pengelola = User::factory()->pengelolaDestinasi()->create();
+        $pengelola = User::factory()->pemilikDestinasi()->create();
         $destination = Destination::factory()->create();
 
         $this->assertFalse((new DestinationPolicy)->moderate($pengelola, $destination));
@@ -152,7 +152,7 @@ class DestinationManagementTest extends TestCase
 
     public function test_pengelola_destinasi_membuat_destinasi_baru(): void
     {
-        $pengelola = User::factory()->pengelolaDestinasi()->create();
+        $pengelola = User::factory()->pemilikDestinasi()->create();
         $category = DestinationCategory::factory()->create();
 
         $kabupaten = Region::factory()->kabupatenKota()->create();
@@ -184,7 +184,7 @@ class DestinationManagementTest extends TestCase
 
     public function test_daftar_destinasi_dibatasi_untuk_pengelola(): void
     {
-        $pengelola = User::factory()->pengelolaDestinasi()->create();
+        $pengelola = User::factory()->pemilikDestinasi()->create();
         Destination::factory()->count(3)->create(['manager_id' => $pengelola->id]);
         Destination::factory()->count(2)->create();
 
@@ -197,7 +197,7 @@ class DestinationManagementTest extends TestCase
 
     public function test_admin_wilayah_dapat_mengelola_dan_moderasi(): void
     {
-        $admin = User::factory()->adminWilayah()->create();
+        $admin = User::factory()->pengelolaLokanusa()->create();
 
         $this->assertTrue($admin->managesAllContent());
 

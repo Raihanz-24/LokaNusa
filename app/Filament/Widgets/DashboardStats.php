@@ -15,6 +15,15 @@ class DashboardStats extends StatsOverviewWidget
 
     protected int|string|array $columnSpan = 'full';
 
+    /**
+     * Hanya pengelola seluruh konten (Developer/Admin/Pengelola LokaNusa)
+     * yang melihat KPI global; pemilik usaha melihat dasbor usahanya sendiri.
+     */
+    public static function canView(): bool
+    {
+        return auth()->user()?->managesAllContent() ?? false;
+    }
+
     public function getPollingInterval(): ?string
     {
         return null;
