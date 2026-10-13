@@ -171,4 +171,59 @@ class ItineraryTest extends TestCase
             ->where('item_id', $destination->id)
             ->count());
     }
+
+    public function test_menambah_kegiatan_bebas_dengan_jam(): void
+    {
+        $user = $this->wisatawan();
+        $itinerary = Itinerary::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->post("/rencana/{$itinerary->slug}/kegiatan", [
+                'title' => 'Sarapan di warung lokal',
+                'day' => 2,
+                'start_time' => '07:30',
+                'end_time' => '08:15',
+            ])
+            ->assertRedirect();
+
+        $item = ItineraryItem::query()->firstOrFail();
+
+        $this->assertNull($item->item_type);
+        $this->assertSame('Sarapan di warung lokal', $item->title);
+        $this->assertSame(2, $item->day);
+        $this->assertSame('07:30', substr($item->start_time, 0, 5));
+        $this->assertSame('08:15', substr($item->end_time, 0, 5));
+        $this->assertTrue($item->isActivity());
+    }
+
+    public function test_halaman_rencana_menampilkan_timeline_jam(): void
+    {
+        $user = $this->wisatawan();
+        $itinerary = Itinerary::factory()->for($user)->create(['title' => 'Trip Timeline']);
+
+        $itinerary->items()->create([
+            'title' => 'Kunjungi Bromo',
+            'day' => 1,
+            'start_time' => '05:00',
+            'end_time' => '09:00',
+        ]);
+
+        $this->actingAs($user)->get("/rencana/{$itinerary->slug}")
+            ->assertSuccessful()
+            ->assertSee('Kunjungi Bromo')
+            ->assertSee('05:00–09:00');
+    }
+
+    public function test_kegiatan_bebas_tidak_boleh_diubah_pengguna_lain(): void
+    {
+        $owner = $this->wisatawan();
+        $other = $this->wisatawan();
+        $itinerary = Itinerary::factory()->for($owner)->create();
+
+        $item = $itinerary->items()->create(['title' => 'Kegiatan', 'day' => 1]);
+
+        $this->actingAs($other)
+            ->patch("/rencana/butir/{$item->id}", ['day' => 2])
+            ->assertForbidden();
+    }
 }

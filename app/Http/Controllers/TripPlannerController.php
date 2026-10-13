@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TripPlannerMessage;
 use App\Services\TripPlannerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class TripPlannerController extends Controller
 {
@@ -23,6 +25,7 @@ class TripPlannerController extends Controller
             'suggestions' => $this->suggestions(),
             'remainingPrompts' => $this->service->remainingPrompts($user),
             'dailyLimit' => $this->service->dailyPromptLimit(),
+            'itineraries' => $user->itineraries()->latest()->pluck('title', 'id'),
         ]);
     }
 
@@ -55,6 +58,40 @@ class TripPlannerController extends Controller
             'messages' => $messages,
             'remaining' => $this->service->remainingPrompts($user),
             'limit' => $this->service->dailyPromptLimit(),
+        ]);
+    }
+
+    /**
+     * Simpan rencana itinerary dari sebuah balasan asisten ke Rencana.
+     */
+    public function applyPlan(Request $request, TripPlannerMessage $message): JsonResponse
+    {
+        $data = $request->validate([
+            'itinerary_id' => ['nullable', 'integer'],
+        ]);
+
+        $user = $request->user();
+
+        try {
+            $result = $this->service->applyPlan($user, $message, $data['itinerary_id'] ?? null);
+        } catch (HttpExceptionInterface $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'message' => __('ui.trip_planner_plan_error'),
+            ], 422);
+        }
+
+        return response()->json([
+            'added' => $result['added'],
+            'itinerary' => [
+                'title' => $result['itinerary']->title,
+                'url' => route('itineraries.show', $result['itinerary']),
+            ],
+            'message' => __('ui.trip_planner_plan_saved', [
+                'count' => $result['added'],
+                'title' => $result['itinerary']->title,
+            ]),
         ]);
     }
 

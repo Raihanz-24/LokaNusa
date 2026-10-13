@@ -14,7 +14,15 @@ class TripPlannerMessage extends Model
         'user_id',
         'role',
         'content',
+        'plan',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'plan' => 'array',
+        ];
+    }
 
     public function user(): BelongsTo
     {

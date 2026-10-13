@@ -57,6 +57,7 @@ class ItineraryController extends Controller
         return view('itineraries.show', [
             'itinerary' => $itinerary,
             'days' => $itinerary->itemsByDay(),
+            'totalDays' => $itinerary->totalDays(),
         ]);
     }
 
@@ -80,16 +81,62 @@ class ItineraryController extends Controller
     }
 
     /**
-     * Ubah hari/catatan satu butir.
+     * Tambahkan kegiatan bebas (teks) ke sebuah hari.
+     */
+    public function storeActivity(Request $request, Itinerary $itinerary)
+    {
+        $this->authorizeOwner($request, $itinerary);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:180'],
+            'day' => ['required', 'integer', 'min:1', 'max:60'],
+            'start_time' => ['nullable', 'date_format:H:i'],
+            'end_time' => ['nullable', 'date_format:H:i'],
+            'location' => ['nullable', 'string', 'max:180'],
+            'cost' => ['nullable', 'integer', 'min:0', 'max:1000000000'],
+            'cost_note' => ['nullable', 'string', 'max:60'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $this->service->addActivity(
+            $itinerary,
+            $data['title'],
+            $data['day'],
+            $data['start_time'] ?? null,
+            $data['end_time'] ?? null,
+            $data['location'] ?? null,
+            $data['note'] ?? null,
+            $data['cost'] ?? null,
+            $data['cost_note'] ?? null,
+        );
+
+        return back()->with('status', 'Kegiatan ditambahkan.');
+    }
+
+    /**
+     * Ubah hari/jam/catatan satu butir.
      */
     public function updateItem(Request $request, ItineraryItem $item)
     {
         $data = $request->validate([
             'day' => ['required', 'integer', 'min:1', 'max:60'],
+            'start_time' => ['nullable', 'date_format:H:i'],
+            'end_time' => ['nullable', 'date_format:H:i'],
+            'title' => ['nullable', 'string', 'max:180'],
+            'location' => ['nullable', 'string', 'max:180'],
+            'cost' => ['nullable', 'integer', 'min:0', 'max:1000000000'],
+            'cost_note' => ['nullable', 'string', 'max:60'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $this->service->updateItem($request->user(), $item, $data['day'], $data['note'] ?? null);
+        $this->service->updateItem($request->user(), $item, $data['day'], $data['note'] ?? null, [
+            'start_time' => $data['start_time'] ?? null,
+            'end_time' => $data['end_time'] ?? null,
+            'title' => $data['title'] ?? null,
+            'location' => $data['location'] ?? null,
+            'cost' => $data['cost'] ?? null,
+            'cost_note' => $data['cost_note'] ?? null,
+        ]);
 
         return back()->with('status', 'Rencana diperbarui.');
     }

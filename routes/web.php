@@ -46,6 +46,7 @@ Route::middleware('public.auth')->group(function (): void {
     // AI Trip Planner (chat bot) — fondasi UI, belum terhubung AI nyata.
     Route::get('/ai-trip-planner', [TripPlannerController::class, 'index'])->name('trip-planner.index');
     Route::post('/ai-trip-planner/kirim', [TripPlannerController::class, 'send'])->name('trip-planner.send');
+    Route::post('/ai-trip-planner/simpan-rencana/{message}', [TripPlannerController::class, 'applyPlan'])->name('trip-planner.apply-plan');
     Route::delete('/ai-trip-planner', [TripPlannerController::class, 'clear'])->name('trip-planner.clear');
 
     // Saran pencarian live (mulai 2 huruf).
@@ -62,6 +63,7 @@ Route::middleware('public.auth')->group(function (): void {
     Route::get('/rencana/{itinerary}', [ItineraryController::class, 'show'])->name('itineraries.show');
     Route::delete('/rencana/{itinerary}', [ItineraryController::class, 'destroy'])->name('itineraries.destroy');
     Route::post('/rencana/{itinerary}/butir/{type}/{id}', [ItineraryController::class, 'addItem'])->name('itineraries.items.store');
+    Route::post('/rencana/{itinerary}/kegiatan', [ItineraryController::class, 'storeActivity'])->name('itineraries.activities.store');
     Route::patch('/rencana/butir/{item}', [ItineraryController::class, 'updateItem'])->name('itineraries.items.update');
     Route::delete('/rencana/butir/{item}', [ItineraryController::class, 'removeItem'])->name('itineraries.items.destroy');
     Route::post('/rencana/cepat/{type}/{id}', [ItineraryController::class, 'quickAdd'])->name('itineraries.quick-add');

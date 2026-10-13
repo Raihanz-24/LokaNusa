@@ -86,6 +86,47 @@ class Itinerary extends EloquentModel
     }
 
     /**
+     * Subtotal estimasi biaya per hari (hanya kegiatan yang punya angka).
+     *
+     * @return array<int, int>
+     */
+    public function costByDay(): array
+    {
+        $totals = [];
+
+        foreach ($this->items as $item) {
+            $cost = $item->effectiveCost();
+
+            if ($cost === null) {
+                continue;
+            }
+
+            $day = max(1, (int) $item->day);
+            $totals[$day] = ($totals[$day] ?? 0) + $cost;
+        }
+
+        ksort($totals);
+
+        return $totals;
+    }
+
+    /**
+     * Total estimasi biaya rencana (hanya kegiatan yang punya angka).
+     */
+    public function totalCost(): int
+    {
+        return array_sum($this->costByDay());
+    }
+
+    /**
+     * Apakah ada minimal satu kegiatan dengan estimasi biaya.
+     */
+    public function hasCostEstimate(): bool
+    {
+        return $this->costByDay() !== [];
+    }
+
+    /**
      * Slug unik untuk judul tertentu.
      */
     public static function uniqueSlug(string $title, ?int $ignoreId = null): string

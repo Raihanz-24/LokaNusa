@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Models\AiKnowledgeEntry;
 use App\Models\AppSetting;
+use App\Models\Itinerary;
 use App\Models\TripPlannerMessage;
 use App\Models\TripPlannerUsage;
 use App\Models\User;
 use App\Services\Ai\AiClient;
+use App\Services\Ai\ItineraryPlanner;
 use App\Support\MarkdownLite;
 use App\Support\RegionResolver;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +34,12 @@ class TripPlannerService
      */
     private const AI_CONTEXT_MESSAGES = 10;
 
-    public function __construct(private readonly AiClient $ai) {}
+    public function __construct(
+        private readonly AiClient $ai,
+        private readonly ItineraryPlanner $planner,
+        private readonly ItineraryService $itineraryService,
+        private readonly ItineraryPlanWriter $planWriter,
+    ) {}
 
     /**
      * Ambil seluruh pesan percakapan milik pengguna (paling lama -> terbaru).
@@ -40,7 +47,7 @@ class TripPlannerService
      * `html` = versi aman untuk dirender (balasan asisten memakai gaya ringan,
      * pesan pengguna sebagai teks biasa). `text` tetap disertakan apa adanya.
      *
-     * @return array<int, array{role: string, text: string, html: string, time: string}>
+     * @return array<int, array{id: int, role: string, text: string, html: string, time: string, has_plan: bool, plan_summary: ?string}>
      */
     public function messages(User $user): array
     {
@@ -48,12 +55,17 @@ class TripPlannerService
             ->orderBy('id')
             ->get()
             ->map(fn (TripPlannerMessage $message): array => [
+                'id' => $message->getKey(),
                 'role' => $message->role,
                 'text' => $message->content,
                 'html' => $message->role === 'user'
                     ? MarkdownLite::plain($message->content)
                     : MarkdownLite::render($message->content),
                 'time' => $message->created_at?->format('H:i') ?? now()->format('H:i'),
+                'has_plan' => filled($message->plan),
+                'plan_summary' => filled($message->plan)
+                    ? $this->planner->summarize($message->plan)
+                    : null,
             ])
             ->all();
     }
@@ -128,7 +140,15 @@ class TripPlannerService
             $history = $this->aiHistory($user);
 
             $this->store($user, 'user', $message);
-            $this->store($user, 'assistant', $this->reply($user, $message, $history));
+
+            $reply = $this->replyWithPlan($user, $message, $history);
+
+            // Balasan itinerary menyertakan rencana terstruktur (untuk disimpan).
+            if ($reply['plan'] !== null) {
+                $this->store($user, 'assistant', $this->planner->toChatMarkdown($reply['plan']), $reply['plan']);
+            } else {
+                $this->store($user, 'assistant', $reply['text']);
+            }
 
             $this->incrementUsage($user);
             $this->prune($user);
@@ -155,30 +175,95 @@ class TripPlannerService
      */
     public function reply(User $user, string $message, array $history = []): string
     {
+        return $this->replyWithPlan($user, $message, $history)['text'];
+    }
+
+    /**
+     * Susun balasan asisten; bila permintaannya berupa itinerary, kembalikan
+     * pula rencana terstruktur (`plan`) karena AI diminta membalas JSON.
+     *
+     * @param  array<int, array{role: string, content: string}>  $history
+     * @return array{text: string, plan: ?array}
+     */
+    public function replyWithPlan(User $user, string $message, array $history = []): array
+    {
         $text = trim($message);
 
         if ($text === '') {
-            return __('ui.trip_planner_empty');
+            return ['text' => __('ui.trip_planner_empty'), 'plan' => null];
         }
 
         // 1) Cek basis pengetahuan admin (kata kunci -> jawaban) lebih dulu.
         $knowledge = $this->knowledgeAnswer($text);
 
         if ($knowledge !== null) {
-            return $knowledge;
+            return ['text' => $knowledge, 'plan' => null];
         }
 
-        // 2) Baru tanya AI nyata.
+        $wantsPlan = $this->planner->wantsItinerary($text);
+
+        $system = $this->systemPrompt();
+
+        if ($wantsPlan) {
+            $system .= "\n\n".$this->planner->jsonInstructions();
+        }
+
         $answer = $this->ai->chat(
             array_merge(
-                [['role' => 'system', 'content' => $this->systemPrompt()]],
+                [['role' => 'system', 'content' => $system]],
                 $history,
                 [['role' => 'user', 'content' => $text]],
             ),
             $user,
+            'trip_planner',
+            $wantsPlan ? 1600 : null,
         );
 
-        return $answer ?? $this->fallbackReply($text);
+        // AI tidak tersedia -> balasan cadangan deterministik.
+        if ($answer === null) {
+            return ['text' => $this->fallbackReply($text), 'plan' => null];
+        }
+
+        // Untuk permintaan itinerary, coba tafsirkan balasan sebagai JSON.
+        if ($wantsPlan) {
+            $plan = $this->planner->parse($answer);
+
+            if ($plan !== null && ! empty($plan['days'])) {
+                return ['text' => $this->planner->toChatMarkdown($plan), 'plan' => $plan];
+            }
+        }
+
+        return ['text' => $answer, 'plan' => null];
+    }
+
+    /**
+     * Terapkan rencana yang tersimpan pada sebuah pesan asisten ke Rencana
+     * perjalanan (itinerary) milik pengguna. Bila `itinerary_id` kosong, buat
+     * rencana baru berjudul sesuai plan.
+     *
+     * @return array{itinerary: Itinerary, added: int}
+     */
+    public function applyPlan(User $user, TripPlannerMessage $message, ?int $itineraryId = null): array
+    {
+        abort_unless($message->user_id === $user->getKey(), 403);
+
+        $plan = $message->plan;
+
+        abort_if(blank($plan), 422, 'Pesan ini tidak memuat rencana.');
+
+        if ($itineraryId !== null) {
+            $itinerary = $user->itineraries()->whereKey($itineraryId)->firstOrFail();
+        } else {
+            $title = filled($plan['title'] ?? null)
+                ? (string) $plan['title']
+                : __('ui.trip_planner_plan_default_title', ['region' => $this->planner->regionName()]);
+
+            $itinerary = $this->itineraryService->create($user, $title);
+        }
+
+        $added = $this->planWriter->write($user, $itinerary, $plan);
+
+        return ['itinerary' => $itinerary, 'added' => $added];
     }
 
     /**
@@ -274,11 +359,12 @@ class TripPlannerService
     /**
      * Simpan satu pesan.
      */
-    private function store(User $user, string $role, string $content): void
+    private function store(User $user, string $role, string $content, ?array $plan = null): void
     {
         $user->tripPlannerMessages()->create([
             'role' => $role,
             'content' => $content,
+            'plan' => $plan,
         ]);
     }
 

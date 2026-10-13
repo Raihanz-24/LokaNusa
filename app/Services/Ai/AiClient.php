@@ -33,7 +33,7 @@ class AiClient
      *
      * @param  array<int, array{role: string, content: string}>  $messages
      */
-    public function chat(array $messages, ?User $user = null, string $context = 'trip_planner'): ?string
+    public function chat(array $messages, ?User $user = null, string $context = 'trip_planner', ?int $maxTokens = null): ?string
     {
         if (! $this->configured()) {
             return null;
@@ -47,7 +47,7 @@ class AiClient
                     'model' => config('ai.model'),
                     'messages' => $messages,
                     'temperature' => (float) config('ai.temperature', 0.7),
-                    'max_tokens' => (int) config('ai.max_tokens', 800),
+                    'max_tokens' => $maxTokens ?? (int) config('ai.max_tokens', 800),
                 ]);
         } catch (Throwable $exception) {
             Log::warning('AI request failed', ['exception' => $exception->getMessage()]);

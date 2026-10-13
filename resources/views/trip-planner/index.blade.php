@@ -14,6 +14,7 @@
     <div class="flex min-h-0 flex-1 flex-col" data-chat
          data-endpoint="{{ route('trip-planner.send') }}"
          data-clear-endpoint="{{ route('trip-planner.clear') }}"
+         data-plan-endpoint="{{ route('trip-planner.apply-plan', ['message' => '__ID__']) }}"
          data-quota-template="{{ __('ui.trip_planner_quota', ['remaining' => '__R__', 'limit' => '__L__']) }}"
          data-quota-exceeded="{{ __('ui.trip_planner_quota_exceeded', ['limit' => $dailyLimit]) }}"
          data-error="{{ __('ui.trip_planner_error') }}">
@@ -47,7 +48,8 @@
                 <div class="mx-auto flex max-w-3xl flex-col gap-3 px-4 py-4">
                     <div data-chat-messages class="flex flex-col gap-3" aria-live="polite">
                         @foreach ($initial as $message)
-                            <x-chat-bubble :role="$message['role']" :text="$message['text']" :html="$message['html'] ?? null" :time="$message['time'] ?? null" />
+                            <x-chat-bubble :role="$message['role']" :text="$message['text']" :html="$message['html'] ?? null" :time="$message['time'] ?? null"
+                                           :plan="$message['has_plan'] ?? false" :summary="$message['plan_summary'] ?? null" :message-id="$message['id'] ?? null" />
                         @endforeach
                     </div>
 
@@ -112,6 +114,48 @@
                 </form>
             </div>
         </div>
+
+        {{-- Modal: simpan itinerary AI ke Rencana --}}
+        <div data-plan-modal class="fixed inset-0 z-50 hidden">
+            <div data-plan-backdrop class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+
+            <div class="absolute inset-x-0 bottom-0 mx-auto max-h-[85vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:inset-0 sm:bottom-auto sm:top-1/2 sm:max-w-md sm:-translate-y-1/2 sm:rounded-3xl">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-slate-900">{{ __('ui.trip_planner_plan_save_button') }}</h2>
+                    <button type="button" data-plan-close
+                            class="grid h-9 w-9 place-items-center rounded-full text-slate-500 hover:bg-slate-100"
+                            aria-label="{{ __('ui.trip_planner_plan_close') }}">
+                        <x-heroicon name="x-mark" class="h-5 w-5" />
+                    </button>
+                </div>
+
+                <p data-plan-info class="mt-1 text-sm text-slate-500"></p>
+
+                <label class="mt-4 block text-sm font-medium text-slate-700">
+                    {{ __('ui.trip_planner_plan_choose') }}
+                    <select data-plan-select
+                            class="mt-1 block w-full rounded-lg border-slate-300 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">{{ __('ui.trip_planner_plan_new_option') }}</option>
+                        @foreach ($itineraries as $id => $title)
+                            <option value="{{ $id }}">{{ $title }}</option>
+                        @endforeach
+                    </select>
+                </label>
+
+                <p data-plan-error class="mt-3 hidden rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
+
+                <div class="mt-5 flex gap-2">
+                    <button type="button" data-plan-close
+                            class="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        {{ __('ui.trip_planner_plan_cancel') }}
+                    </button>
+                    <button type="button" data-plan-confirm
+                            class="flex-1 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+                        {{ __('ui.trip_planner_plan_confirm') }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     @once
@@ -138,6 +182,14 @@
                     var bottomBtn = root.querySelector('[data-chat-bottom]');
                     var quota = root.querySelector('[data-chat-quota]');
                     var suggestions = root.querySelector('[data-chat-suggestions]');
+                    var planEndpoint = root.dataset.planEndpoint || '';
+                    var planModal = root.querySelector('[data-plan-modal]');
+                    var planSelect = planModal ? planModal.querySelector('[data-plan-select]') : null;
+                    var planInfo = planModal ? planModal.querySelector('[data-plan-info]') : null;
+                    var planError = planModal ? planModal.querySelector('[data-plan-error]') : null;
+                    var planConfirm = planModal ? planModal.querySelector('[data-plan-confirm]') : null;
+                    var currentPlanMessageId = null;
+                    var planSaveLabel = @json(__('ui.trip_planner_plan_save_button'));
                     // Layout publik kini menyertakan <meta name="csrf-token">.
                     var csrfMeta = document.querySelector('meta[name="csrf-token"]');
                     var csrf = csrfMeta ? csrfMeta.content : '';
@@ -178,7 +230,7 @@
                         return new Date().toTimeString().slice(0, 5);
                     }
 
-                    function bubble(role, text, time, html) {
+                    function bubble(role, text, time, html, plan, summary, messageId) {
                         var isUser = role === 'user';
                         var wrap = document.createElement('div');
                         wrap.className = 'flex ' + (isUser ? 'justify-end' : 'justify-start');
@@ -197,6 +249,17 @@
                         }
                         inner.appendChild(body);
 
+                        if (plan) {
+                            var saveBtn = document.createElement('button');
+                            saveBtn.type = 'button';
+                            saveBtn.setAttribute('data-chat-save-plan', '');
+                            saveBtn.setAttribute('data-message-id', messageId || '');
+                            saveBtn.setAttribute('data-summary', summary || '');
+                            saveBtn.className = 'mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700';
+                            saveBtn.textContent = planSaveLabel;
+                            inner.appendChild(saveBtn);
+                        }
+
                         if (time) {
                             var meta = document.createElement('span');
                             meta.className = 'mt-1 block text-right text-[10px] ' + (isUser ? 'text-emerald-100' : 'text-slate-400');
@@ -211,13 +274,13 @@
                     function render(messages) {
                         wall.innerHTML = '';
                         (messages || []).forEach(function (m) {
-                            wall.appendChild(bubble(m.role, m.text, m.time, m.html));
+                            wall.appendChild(bubble(m.role, m.text, m.time, m.html, m.has_plan, m.plan_summary, m.id));
                         });
                         scrollDown();
                     }
 
-                    function appendMessage(role, text, time, html) {
-                        wall.appendChild(bubble(role, text, time, html));
+                    function appendMessage(role, text, time, html, plan, summary, messageId) {
+                        wall.appendChild(bubble(role, text, time, html, plan, summary, messageId));
                         scrollDown();
                     }
 
@@ -236,6 +299,84 @@
                     function notify(text) {
                         // Balasan sistem bergaya asisten (mis. batas harian).
                         appendMessage('assistant', text, nowTime());
+                    }
+
+                    function openPlanModal(button) {
+                        if (! planModal) return;
+                        currentPlanMessageId = button.getAttribute('data-message-id') || '';
+                        if (planInfo) planInfo.textContent = button.getAttribute('data-summary') || '';
+                        if (planError) planError.classList.add('hidden');
+                        planModal.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden';
+                    }
+
+                    function closePlanModal() {
+                        if (! planModal) return;
+                        planModal.classList.add('hidden');
+                        document.body.style.overflow = '';
+                        currentPlanMessageId = null;
+                    }
+
+                    function savePlan() {
+                        if (! currentPlanMessageId || ! planEndpoint) return;
+
+                        var url = planEndpoint.replace('__ID__', currentPlanMessageId);
+                        var itineraryId = planSelect ? planSelect.value : '';
+                        if (planConfirm) planConfirm.disabled = true;
+
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrf,
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            body: JSON.stringify({ itinerary_id: itineraryId || null }),
+                        })
+                            .then(function (res) {
+                                return res.json().then(function (data) {
+                                    return { ok: res.ok, data: data };
+                                });
+                            })
+                            .then(function (result) {
+                                if (! result.ok) {
+                                    if (planError) {
+                                        planError.textContent = (result.data && result.data.message) || errorText;
+                                        planError.classList.remove('hidden');
+                                    }
+                                    return;
+                                }
+
+                                closePlanModal();
+                                notify(result.data.message || errorText);
+                            })
+                            .catch(function () {
+                                if (planError) {
+                                    planError.textContent = errorText;
+                                    planError.classList.remove('hidden');
+                                }
+                            })
+                            .finally(function () {
+                                if (planConfirm) planConfirm.disabled = false;
+                            });
+                    }
+
+                    // Delegasi klik: tombol "Simpan ke Rencana" ada di bubble yang
+                    // di-render ulang, jadi listener dipasang di wadah pesan.
+                    wall.addEventListener('click', function (event) {
+                        var btn = event.target.closest('[data-chat-save-plan]');
+                        if (btn) openPlanModal(btn);
+                    });
+
+                    if (planModal) {
+                        planModal.querySelectorAll('[data-plan-close], [data-plan-backdrop]').forEach(function (el) {
+                            el.addEventListener('click', closePlanModal);
+                        });
+                        if (planConfirm) planConfirm.addEventListener('click', savePlan);
+                        document.addEventListener('keydown', function (event) {
+                            if (event.key === 'Escape') closePlanModal();
+                        });
                     }
 
                     function send(message) {
