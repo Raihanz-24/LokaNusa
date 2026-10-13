@@ -77,13 +77,15 @@ Route::middleware('public.auth')->group(function (): void {
     Route::delete('/rencana/butir/{item}', [ItineraryController::class, 'removeItem'])->name('itineraries.items.destroy');
     Route::post('/rencana/cepat/{type}/{id}', [ItineraryController::class, 'quickAdd'])->name('itineraries.quick-add');
 
-    // Pemesanan DEMO (penginapan & produk UMKM) — pembayaran simulasi, bukan nyata.
-    Route::get('/pesanan', [BookingController::class, 'index'])->name('bookings.index');
-    Route::post('/pesanan/penginapan/{accommodation:slug}', [BookingController::class, 'storeAccommodation'])->name('bookings.store-accommodation');
-    Route::post('/pesanan/produk/{product}', [BookingController::class, 'storeProduct'])->name('bookings.store-product');
-    Route::get('/pesanan/{booking:code}', [BookingController::class, 'show'])->name('bookings.show');
-    Route::post('/pesanan/{booking:code}/bayar', [BookingController::class, 'pay'])->name('bookings.pay');
-    Route::post('/pesanan/{booking:code}/batal', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    // Pemesanan DEMO (penginapan & produk UMKM) — diblokir 404 saat fitur nonaktif.
+    Route::middleware('feature:booking')->group(function (): void {
+        Route::get('/pesanan', [BookingController::class, 'index'])->name('bookings.index');
+        Route::post('/pesanan/penginapan/{accommodation:slug}', [BookingController::class, 'storeAccommodation'])->name('bookings.store-accommodation');
+        Route::post('/pesanan/produk/{product}', [BookingController::class, 'storeProduct'])->name('bookings.store-product');
+        Route::get('/pesanan/{booking:code}', [BookingController::class, 'show'])->name('bookings.show');
+        Route::post('/pesanan/{booking:code}/bayar', [BookingController::class, 'pay'])->name('bookings.pay');
+        Route::post('/pesanan/{booking:code}/batal', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    });
 
     // Profil akun (bagian dari autentikasi standar).
     Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsurePublicAuthenticated;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'public.auth' => EnsurePublicAuthenticated::class,
+            'feature' => EnsureFeatureEnabled::class,
         ]);
 
         // Set locale setelah sesi tersedia (agar pilihan switch bahasa terbaca).

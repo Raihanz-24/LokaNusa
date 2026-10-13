@@ -112,6 +112,7 @@
                     @endif
                 </div>
 
+                @if (\App\Support\Features::booking())
                 <div class="rounded-2xl border border-slate-200 bg-white p-5">
                     <div class="mb-3 flex items-center justify-between">
                         <h2 class="font-semibold text-slate-900">Pesan Menginap</h2>
@@ -170,6 +171,13 @@
                         <p class="text-sm text-slate-500">Pemesanan daring belum tersedia. Silakan hubungi penginapan langsung.</p>
                     @endif
                 </div>
+                @endif
+
+                @unless (\App\Support\Features::booking())
+                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
+                        Pemesanan daring belum tersedia. Silakan hubungi penginapan langsung.
+                    </div>
+                @endunless
             </aside>
         </div>
 

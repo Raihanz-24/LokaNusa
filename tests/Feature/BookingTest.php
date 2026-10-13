@@ -16,6 +16,14 @@ class BookingTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Modul pemesanan diuji dalam keadaan AKTIF (default .env: nonaktif).
+        config()->set('lokanusa.features.booking', true);
+    }
+
     private function wisatawan(): User
     {
         return User::factory()->wisatawan()->create();
@@ -172,5 +180,36 @@ class BookingTest extends TestCase
             ->get(route('umkm.show', $business->slug))
             ->assertOk()
             ->assertSee('Beli (Demo)');
+    }
+
+    public function test_rute_pesanan_404_saat_fitur_nonaktif(): void
+    {
+        config()->set('lokanusa.features.booking', false);
+
+        $this->actingAs($this->wisatawan())
+            ->get(route('bookings.index'))
+            ->assertNotFound();
+    }
+
+    public function test_form_dan_tombol_disembunyikan_saat_fitur_nonaktif(): void
+    {
+        config()->set('lokanusa.features.booking', false);
+
+        $accommodation = Accommodation::factory()->published()->create(['price_per_night' => 200000]);
+        $business = UmkmBusiness::factory()->published()->create();
+        UmkmProduct::factory()->create([
+            'umkm_business_id' => $business->getKey(),
+            'is_available' => true,
+        ]);
+
+        $user = $this->wisatawan();
+
+        $this->actingAs($user)->get(route('accommodations.show', $accommodation->slug))
+            ->assertOk()
+            ->assertDontSee('Pesan Menginap');
+
+        $this->actingAs($user)->get(route('umkm.show', $business->slug))
+            ->assertOk()
+            ->assertDontSee('Beli (Demo)');
     }
 }

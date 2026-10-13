@@ -79,7 +79,7 @@
                                             <span class="text-sm font-normal text-slate-500">/ {{ $product->unit ?? 'pcs' }}</span>
                                         </p>
 
-                                        @if ($product->is_available)
+                                        @if ($product->is_available && \App\Support\Features::booking())
                                             <details class="mt-2 group">
                                                 <summary class="cursor-pointer list-none rounded-lg bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-emerald-700">
                                                     Beli (Demo)

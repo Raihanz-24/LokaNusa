@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Bookings;
 use App\Filament\Resources\Bookings\Pages\ListBookings;
 use App\Filament\Resources\Bookings\Tables\BookingsTable;
 use App\Models\Booking;
+use App\Support\Features;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -55,9 +56,18 @@ class BookingResource extends Resource
 
     public static function canViewAny(): bool
     {
+        if (! Features::booking()) {
+            return false;
+        }
+
         $user = Auth::user();
 
         return $user !== null && ($user->managesAllContent() || $user->isOwner());
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Features::booking();
     }
 
     public static function canDelete(Model $record): bool
