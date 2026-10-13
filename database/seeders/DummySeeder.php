@@ -6,8 +6,10 @@ use App\Enums\AccommodationType;
 use App\Enums\BusinessType;
 use App\Enums\ContentStatus;
 use App\Enums\EventType;
+use App\Enums\RegionType;
 use App\Enums\UserRole;
 use App\Models\Accommodation;
+use App\Models\AppSetting;
 use App\Models\Destination;
 use App\Models\DestinationCategory;
 use App\Models\Event;
@@ -35,10 +37,19 @@ class DummySeeder extends Seeder
 {
     public function run(): void
     {
-        $focus = RegionResolver::focus();
+        $focus = $this->resolveFocus();
 
         if ($focus === null) {
-            $this->command?->warn('Kabupaten fokus belum ditetapkan. Atur di /admin/settings lebih dulu.');
+            // Wilayah belum tersedia → impor data referensi wilayah dulu.
+            if (Region::query()->count() === 0) {
+                $this->command?->info('Tabel wilayah kosong — menjalankan RegionSeeder...');
+                $this->call(RegionSeeder::class);
+                $focus = $this->resolveFocus();
+            }
+        }
+
+        if ($focus === null) {
+            $this->command?->warn('Kabupaten fokus belum ditetapkan. Jalankan RegionSeeder lalu atur di /admin/settings.');
 
             return;
         }
@@ -50,7 +61,7 @@ class DummySeeder extends Seeder
             ->get();
 
         if ($kecamatan->isEmpty()) {
-            $this->command?->warn('Tidak ada kecamatan pada kabupaten fokus.');
+            $this->command?->warn('Tidak ada kecamatan pada kabupaten fokus. Jalankan RegionSeeder lebih dulu.');
 
             return;
         }
@@ -67,6 +78,38 @@ class DummySeeder extends Seeder
         $this->seedAccommodations($kecamatan, $gallery);
         $this->seedEvents($kecamatan, $gallery);
         $this->seedReviews($this->reviewers());
+
+        $this->command?->info("Data dummy untuk {$focus->name} berhasil di-seed.");
+    }
+
+    /**
+     * Kabupaten/kota fokus. Bila belum ditetapkan, coba deteksi otomatis
+     * (kode dapat diatur lewat env `DUMMY_FOCUS_CODE`, default Probolinggo 35.13)
+     * lalu simpan sebagai fokus agar seeder jalan sekali jalan di server.
+     */
+    private function resolveFocus(): ?Region
+    {
+        $focus = RegionResolver::focus();
+
+        if ($focus !== null) {
+            return $focus;
+        }
+
+        $code = (string) env('DUMMY_FOCUS_CODE', '35.13');
+
+        $detected = Region::query()
+            ->where('code', $code)
+            ->where('type', RegionType::KabupatenKota->value)
+            ->first();
+
+        if ($detected === null) {
+            return null;
+        }
+
+        AppSetting::setFocusRegion($detected->getKey());
+        $this->command?->info("Kabupaten fokus otomatis ditetapkan: {$detected->name} (kode {$code}).");
+
+        return $detected;
     }
 
     /**

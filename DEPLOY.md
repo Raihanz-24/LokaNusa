@@ -3,7 +3,7 @@
 Dokumen ini menjelaskan cara **mendeploy LokaNusa ke server** (uji coba / staging / produksi)
 setelah kode di-*push* ke Git atau di-*pull* di server.
 
-> Lingkungan yang diasumsikan: **Linux (Ubuntu/Debian) + Nginx/Apache + PHP 8.2 + MySQL 8 + Composer + Node.js**.
+> Lingkungan: **Linux (Ubuntu/Debian) + Nginx/Apache + PHP 8.2-FPM + MySQL 8 + Composer + Node.js**.
 > LokaNusa = Laravel 12 + Filament 5 (panel `/admin`) + Blade/Tailwind v4 (sisi publik).
 
 ---
@@ -59,7 +59,7 @@ Folder-folder itu akan dibuat ulang di langkah kompilasi.
 ## 3. Konfigurasi environment (`.env`)
 
 ```bash
-cp .env.example .env          # (Windows: copy .env.example .env)
+cp .env.example .env
 php artisan key:generate
 ```
 
@@ -145,6 +145,27 @@ php artisan wilayah:import-villages
   (`php artisan db:seed --class=HomeContentSeeder` untuk konten bawaan).
 
 > **Jangan** menjalankan `DummySeeder` di produksi (itu data contoh pengembangan).
+> Untuk **server uji coba** yang ingin tampil seperti di lokal, lihat §5e.
+
+### 5e. Data dummy untuk server uji coba (opsional)
+Bila server hanya untuk **testing/demo** dan Anda ingin tampilannya sama dengan lokal
+(10 destinasi, 10 UMKM, 10 penginapan, 10 event + ulasan rating), jalankan **satu perintah**:
+
+```bash
+php artisan db:seed --class=DummySeeder --force
+```
+
+Seeder ini **idempoten** dan **mandiri**:
+- Bila tabel wilayah masih kosong, ia otomatis menjalankan `RegionSeeder`.
+- Bila kabupaten fokus belum ditetapkan, ia otomatis mendeteksi **Probolinggo (kode 35.13)**
+  dan menyimpannya sebagai fokus. Ubah kode lain bila perlu:
+  ```bash
+  DUMMY_FOCUS_CODE=35.13 php artisan db:seed --class=DummySeeder --force
+  ```
+- Gambar contoh disalin dari `public/images/...` ke disk publik (butuh `php artisan storage:link`).
+
+> ⚠️ **Hanya untuk testing/demo.** Jangan dipakai di produksi dengan data nyata.
+> Untuk membersihkan nanti: hapus data dummy lewat panel admin, atau reset DB.
 
 ---
 
@@ -262,6 +283,17 @@ sudo supervisorctl reread && sudo supervisorctl update && sudo supervisorctl sta
 
 ## 10. Perintah update (setiap ada perubahan kode)
 
+### Cara cepat (disarankan): skrip
+Tersedia `scripts/deploy.sh` yang menjalankan seluruh langkah berikut:
+```bash
+cd /var/www/loka-nusa
+chmod +x scripts/deploy.sh      # sekali saja
+./scripts/deploy.sh
+```
+> Bila muncul error `$'\r': command not found`, file terunduh dengan akhir baris CRLF.
+> Perbaiki sekali: `sed -i 's/\r$//' scripts/deploy.sh` (atau `dos2unix scripts/deploy.sh`).
+
+### Cara manual (setara)
 Setelah `git pull` (atau unggah kode baru) di server:
 
 ```bash
@@ -320,11 +352,62 @@ php artisan up
 
 ---
 
-## 13. Catatan khusus Windows / Laragon (uji lokal di server Windows)
+## 13. Catatan khusus Linux
 
-- `php artisan storage:link` di Windows membuat *junction* (bukan symlink). Sudah berfungsi.
-- Jalankan queue worker & scheduler via Task Scheduler bila perlu.
-- Arahkan virtual host Laragon ke folder **`public`** proyek.
+### 13a. Instalasi paket (Ubuntu/Debian)
+```bash
+sudo apt update
+sudo apt install -y nginx mysql-server unzip git \
+  php8.2-fpm php8.2-cli php8.2-mysql php8.2-mbstring php8.2-xml \
+  php8.2-curl php8.2-gd php8.2-zip php8.2-bcmath php8.2-intl
+# Composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+# Node 20 LTS (via nvm atau nodesource)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+### 13b. Kepemilikan & permission
+```bash
+# Pemilik: user deploy (mis. "deploy"); grup: www-data (pemilik proses web).
+sudo chown -R deploy:www-data /var/www/loka-nusa
+sudo find /var/www/loka-nusa -type d -exec chmod 755 {} \;
+sudo find /var/www/loka-nusa -type f -exec chmod 644 {} \;
+# Folder yang harus writable oleh www-data:
+sudo chmod -R 775 /var/www/loka-nusa/storage /var/www/loka-nusa/bootstrap/cache
+# (alternatif) setgid agar file baru ikut grup www-data:
+sudo chmod -R g+s /var/www/loka-nusa/storage /var/www/loka-nusa/bootstrap/cache
+```
+
+### 13c. PHP-FPM
+- Lokasi socket (cek versi): `/run/php/php8.2-fpm.sock` — samakan dengan `fastcgi_pass` di Nginx.
+- Restart setelah ubah config: `sudo systemctl restart php8.2-fpm`.
+- Batas ukuran unggah: atur `upload_max_filesize` & `post_max_size` di `/etc/php/8.2/fpm/php.ini`
+  (mis. `20M`), lalu restart php-fpm. Pastikan juga `client_max_body_size` di Nginx.
+
+### 13d. Port 80/443 terbuka
+```bash
+sudo ufw allow 'Nginx Full'
+```
+
+### 13e. SELinux (hanya CentOS/RHEL/Rocky/Alma)
+```bash
+# Bila SELinux enforcing, izinkan web menulis storage:
+sudo semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/loka-nusa/storage(/.*)?"
+sudo semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/loka-nusa/bootstrap/cache(/.*)?"
+sudo restorecon -Rv /var/www/loka-nusa/storage /var/www/loka-nusa/bootstrap/cache
+```
+Bila menyalakan koneksi ke layanan lain (mis. MySQL di host lain): `setsebool -P httpd_can_network_connect on`.
+
+### 13f. Cek cepat kesehatan
+```bash
+cd /var/www/loka-nusa
+php -m | grep -E 'pdo_mysql|gd|mbstring|intl'   # ekstensi wajib ada
+php artisan about                                # ringkasan env & driver
+php artisan migrate:status                       # status migrasi
+sudo systemctl status nginx php8.2-fpm           # status layanan
+```
 
 ---
 
@@ -340,6 +423,8 @@ php artisan migrate --force
 php artisan db:seed --class=RegionSeeder --force
 php artisan db:seed --class=SuperAdminSeeder --force
 php artisan db:seed --class=HomeContentSeeder --force
+# (uji coba/demo saja) data dummy seperti lokal:
+# php artisan db:seed --class=DummySeeder --force
 npm ci && npm run build
 php artisan filament:assets
 php artisan storage:link
