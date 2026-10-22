@@ -20,7 +20,7 @@ Status: `PENDING` | `IN_PROGRESS` | `BLOCKED` | `READY_FOR_REVIEW` | `APPROVED`
 | 11 | Accommodation | READY_FOR_REVIEW | tanpa booking engine; sisi publik penginapan + filter |
 | 12 | Event & Calendar | READY_FOR_REVIEW | filter tanggal; `/event` + `/event/{slug}` |
 | 13 | Akun wisatawan & engagement | READY_FOR_REVIEW | favorit, ulasan + moderasi (`/favorit`) |
-| 14 | QR Smart Tourism | PENDING | generate, scan, statistik |
+| 14 | QR Smart Tourism | READY_FOR_REVIEW | token QR per destinasi, `/q/{token}` catat pindai + redirect, statistik di panel |
 | 15 | Itinerary dasar | READY_FOR_REVIEW | tanpa AI; `/rencana` + butir per hari, tambah cepat dari detail |
 | 16 | PWA installation & offline | READY_FOR_REVIEW | manifest, SW, cache aman |
 | 17 | Dashboard & analytics dasar | READY_FOR_REVIEW | KPI data aktual |

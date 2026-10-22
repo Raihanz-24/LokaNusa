@@ -12,6 +12,7 @@ use App\Http\Controllers\ItineraryController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QrController;
 use App\Http\Controllers\SearchSuggestController;
 use App\Http\Controllers\TripPlannerController;
 use App\Http\Controllers\UmkmController;
@@ -25,6 +26,12 @@ Route::get('bahasa/{locale}', [LocaleController::class, 'update'])->name('locale
 
 // Rute autentikasi publik (login/daftar/reset kata sandi/verifikasi email) — standar Breeze.
 require __DIR__.'/auth.php';
+
+// QR Smart Tourism: pemindaian mencatat kunjungan lalu mengalihkan ke detail.
+// Sengaja PUBLIK (di luar public.auth) agar pemindaian tamu tetap tercatat;
+// tamu lalu diarahkan ke login dengan URL tujuan tersimpan.
+Route::get('/q/{token}', [QrController::class, 'scan'])->name('qr.scan');
+Route::get('/q/{destination:slug}/gambar', [QrController::class, 'image'])->name('qr.image');
 
 // Halaman publik lainnya: wajib login (tamu dikembalikan ke beranda + popup).
 Route::middleware('public.auth')->group(function (): void {
