@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ContentStatus;
 use App\Enums\CultureType;
+use App\Models\Concerns\HasQrCode;
 use Database\Factories\CultureArticleFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Support\Str;
 class CultureArticle extends Model
 {
     /** @use HasFactory<CultureArticleFactory> */
-    use HasFactory;
+    use HasFactory, HasQrCode;
 
     protected $fillable = [
         'author_id',

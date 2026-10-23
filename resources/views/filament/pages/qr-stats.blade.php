@@ -1,17 +1,24 @@
 <x-filament-panels::page>
     <div class="grid gap-6 lg:grid-cols-3">
         {{-- Kartu QR --}}
-        <x-filament::section heading="Kode QR Destinasi" class="lg:col-span-1">
+        <x-filament::section heading="Kode QR" class="lg:col-span-1">
             <div class="flex flex-col items-center gap-4">
-                <img src="{{ $qrImage }}" alt="QR {{ $record->name }}"
+                <img src="{{ $qrImage }}" alt="QR {{ $contentTitle }}"
                      class="h-64 w-64 rounded-xl border border-gray-200 bg-white p-2">
 
                 <p class="break-all text-center text-xs text-gray-500">{{ $qrUrl }}</p>
 
+                <x-filament::badge color="gray">{{ $contentLabel }}</x-filament::badge>
+
                 <div class="flex flex-wrap justify-center gap-2">
-                    <x-filament::button tag="a" :href="route('qr.image', $record->slug)"
+                    <x-filament::button tag="a" :href="route('qr.image', $record->qrToken())"
                                         target="_blank" icon="heroicon-o-arrow-down-tray" color="primary">
                         Unduh PNG
+                    </x-filament::button>
+
+                    <x-filament::button tag="a" :href="$this->posterUrl()" target="_blank"
+                                        icon="heroicon-o-printer" color="success">
+                        Papan QR
                     </x-filament::button>
 
                     <x-filament::button tag="a" :href="$qrUrl" target="_blank"
@@ -20,9 +27,15 @@
                     </x-filament::button>
                 </div>
 
-                <p class="text-center text-xs text-gray-500">
-                    Cetak dan tempel di lokasi wisata. Setiap pindai tercatat sebagai kunjungan.
-                </p>
+                @if (! $this->isPublished())
+                    <p class="rounded-lg bg-warning-50 px-3 py-2 text-center text-xs text-warning-700">
+                        Konten belum terbit — QR baru aktif setelah konten dipublikasikan.
+                    </p>
+                @else
+                    <p class="text-center text-xs text-gray-500">
+                        Cetak dan tempel di lokasi. Setiap pindai tercatat sebagai kunjungan.
+                    </p>
+                @endif
             </div>
         </x-filament::section>
 

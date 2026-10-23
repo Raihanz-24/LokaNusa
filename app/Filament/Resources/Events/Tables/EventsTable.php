@@ -5,8 +5,10 @@ namespace App\Filament\Resources\Events\Tables;
 use App\Enums\ContentStatus;
 use App\Enums\EventType;
 use App\Enums\Permission;
+use App\Filament\Pages\QrStats;
 use App\Filament\Support\ModerationActions;
 use App\Services\EventService;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
@@ -68,6 +70,12 @@ class EventsTable
             ->recordActions([
                 ...ModerationActions::make(EventService::class, Permission::ManageEvents),
                 EditAction::make(),
+
+                Action::make('qr')
+                    ->label('QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('gray')
+                    ->url(fn ($record): string => QrStats::getUrl(['type' => 'event', 'id' => $record->getKey()])),
                 DeleteAction::make(),
             ]);
     }

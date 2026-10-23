@@ -149,10 +149,17 @@ class EngagementTest extends TestCase
         $this->assertSame(4.0, $destination->averageRating());
     }
 
-    public function test_hanya_super_admin_yang_dapat_mengakses_panel_ulasan(): void
+    public function test_moderator_dan_developer_dapat_mengakses_panel_ulasan(): void
     {
-        // Admin pemerintah/wilayah tidak lagi dimoderasi (ulasan auto-terbit).
+        // D-051: moderasi ulasan mengikuti permission ModerateContent,
+        // sehingga Pengelola LokaNusa & Admin Pemerintah ikut berwenang.
         $this->actingAs(User::factory()->adminPemerintah()->create());
+        $this->assertTrue(ReviewResource::canViewAny());
+
+        $this->actingAs(User::factory()->pengelolaLokanusa()->create());
+        $this->assertTrue(ReviewResource::canViewAny());
+
+        $this->actingAs(User::factory()->pemilikUmkm()->create());
         $this->assertFalse(ReviewResource::canViewAny());
 
         $this->actingAs(User::factory()->wisatawan()->create());

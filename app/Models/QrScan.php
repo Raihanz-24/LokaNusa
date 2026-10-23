@@ -10,13 +10,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * Catatan satu pemindaian QR destinasi (Smart Tourism).
+ * Catatan satu pemindaian QR (Smart Tourism).
  *
  * Setiap baris = satu kunjungan nyata lewat QR; dipakai untuk statistik
  * pemindaian (tanpa data rekaan).
  *
  * @property int $id
- * @property int $destination_id
+ * @property int $qr_code_id
  * @property ?int $user_id
  * @property ?string $ip_address
  * @property ?string $user_agent
@@ -28,7 +28,7 @@ class QrScan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'destination_id',
+        'qr_code_id',
         'user_id',
         'ip_address',
         'user_agent',
@@ -42,9 +42,9 @@ class QrScan extends Model
         ];
     }
 
-    public function destination(): BelongsTo
+    public function qrCode(): BelongsTo
     {
-        return $this->belongsTo(Destination::class);
+        return $this->belongsTo(QrCode::class);
     }
 
     public function user(): BelongsTo

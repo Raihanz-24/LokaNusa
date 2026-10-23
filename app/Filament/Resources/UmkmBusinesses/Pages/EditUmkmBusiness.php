@@ -4,6 +4,7 @@ namespace App\Filament\Resources\UmkmBusinesses\Pages;
 
 use App\Enums\ContentStatus;
 use App\Enums\Permission;
+use App\Filament\Concerns\ModeratesContentActions;
 use App\Filament\Concerns\ReverseGeocodesAddress;
 use App\Filament\Resources\UmkmBusinesses\UmkmBusinessResource;
 use App\Services\UmkmService;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Gate;
 
 class EditUmkmBusiness extends EditRecord
 {
+    use ModeratesContentActions;
     use ReverseGeocodesAddress;
 
     protected static string $resource = UmkmBusinessResource::class;
@@ -37,6 +39,8 @@ class EditUmkmBusiness extends EditRecord
                     && in_array($this->record->status, [ContentStatus::Pending, ContentStatus::Draft, ContentStatus::Archived], true))
                 ->requiresConfirmation()
                 ->action(fn () => $this->moderate(fn () => app(UmkmService::class)->approve($this->record, auth()->user()), 'UMKM diterbitkan.')),
+
+            $this->moderationAction(UmkmService::class, 'UMKM'),
 
             DeleteAction::make(),
         ];

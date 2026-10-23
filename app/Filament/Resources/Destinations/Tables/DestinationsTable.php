@@ -5,7 +5,7 @@ namespace App\Filament\Resources\Destinations\Tables;
 use App\Enums\ContentStatus;
 use App\Enums\Permission;
 use App\Enums\RegionType;
-use App\Filament\Resources\Destinations\Pages\DestinationQrStats;
+use App\Filament\Pages\QrStats;
 use App\Models\Destination;
 use App\Models\Region;
 use App\Services\DestinationService;
@@ -97,7 +97,7 @@ class DestinationsTable
                     ->label('QR')
                     ->icon(Heroicon::OutlinedQrCode)
                     ->color('gray')
-                    ->url(fn (Destination $record): string => DestinationQrStats::getUrl(['record' => $record])),
+                    ->url(fn (Destination $record): string => QrStats::getUrl(['type' => 'destinasi', 'id' => $record->getKey()])),
 
                 Action::make('submit')
                     ->label('Ajukan')

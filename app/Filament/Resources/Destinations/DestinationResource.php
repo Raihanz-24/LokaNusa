@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Destinations;
 
 use App\Enums\Permission;
 use App\Filament\Resources\Destinations\Pages\CreateDestination;
-use App\Filament\Resources\Destinations\Pages\DestinationQrStats;
 use App\Filament\Resources\Destinations\Pages\EditDestination;
 use App\Filament\Resources\Destinations\Pages\ListDestinations;
 use App\Filament\Resources\Destinations\Schemas\DestinationForm;
@@ -70,7 +69,6 @@ class DestinationResource extends Resource
             'index' => ListDestinations::route('/'),
             'create' => CreateDestination::route('/create'),
             'edit' => EditDestination::route('/{record}/edit'),
-            'qr' => DestinationQrStats::route('/{record}/qr'),
         ];
     }
 }

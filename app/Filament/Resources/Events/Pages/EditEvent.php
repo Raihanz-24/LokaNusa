@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Events\Pages;
 
 use App\Enums\ContentStatus;
 use App\Enums\Permission;
+use App\Filament\Concerns\ModeratesContentActions;
 use App\Filament\Resources\Events\EventResource;
 use App\Services\EventService;
 use Filament\Actions\Action;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Gate;
 
 class EditEvent extends EditRecord
 {
+    use ModeratesContentActions;
+
     protected static string $resource = EventResource::class;
 
     protected function getHeaderActions(): array
@@ -34,6 +37,8 @@ class EditEvent extends EditRecord
                     && in_array($this->record->status, [ContentStatus::Pending, ContentStatus::Draft, ContentStatus::Archived], true))
                 ->requiresConfirmation()
                 ->action(fn () => $this->moderate(fn () => app(EventService::class)->approve($this->record, auth()->user()), 'Event diterbitkan.')),
+
+            $this->moderationAction(EventService::class, 'Event'),
 
             DeleteAction::make(),
         ];

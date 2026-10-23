@@ -36,10 +36,45 @@ class ReviewService
     }
 
     /**
-     * Hapus ulasan (mis. karena melanggar aturan / SARA). Hanya super admin.
+     * Hapus ulasan (mis. karena melanggar aturan / SARA).
      */
     public function delete(Review $review): void
     {
         $review->delete();
+    }
+
+    /**
+     * Sembunyikan ulasan yang melanggar tanpa menghapus datanya.
+     *
+     * Status diubah menjadi `rejected` + alasan dicatat, sehingga ulasan
+     * hilang dari tampilan publik namun bukti tetap tersimpan.
+     */
+    public function hide(Review $review, string $reason): Review
+    {
+        $reason = trim($reason);
+
+        if ($reason === '') {
+            throw new \InvalidArgumentException('Alasan penyembunyian wajib diisi.');
+        }
+
+        $review->status = ContentStatus::Rejected;
+        $review->rejection_reason = $reason;
+        $review->published_at = null;
+        $review->save();
+
+        return $review;
+    }
+
+    /**
+     * Terbitkan kembali ulasan yang sebelumnya disembunyikan.
+     */
+    public function publish(Review $review): Review
+    {
+        $review->status = ContentStatus::Published;
+        $review->rejection_reason = null;
+        $review->published_at = now();
+        $review->save();
+
+        return $review;
     }
 }

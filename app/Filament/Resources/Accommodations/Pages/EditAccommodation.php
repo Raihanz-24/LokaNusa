@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Accommodations\Pages;
 
 use App\Enums\ContentStatus;
 use App\Enums\Permission;
+use App\Filament\Concerns\ModeratesContentActions;
 use App\Filament\Concerns\ReverseGeocodesAddress;
 use App\Filament\Resources\Accommodations\AccommodationResource;
 use App\Services\AccommodationService;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Gate;
 
 class EditAccommodation extends EditRecord
 {
+    use ModeratesContentActions;
     use ReverseGeocodesAddress;
 
     protected static string $resource = AccommodationResource::class;
@@ -37,6 +39,8 @@ class EditAccommodation extends EditRecord
                     && in_array($this->record->status, [ContentStatus::Pending, ContentStatus::Draft, ContentStatus::Archived], true))
                 ->requiresConfirmation()
                 ->action(fn () => $this->moderate(fn () => app(AccommodationService::class)->approve($this->record, auth()->user()), 'Penginapan diterbitkan.')),
+
+            $this->moderationAction(AccommodationService::class, 'Penginapan'),
 
             DeleteAction::make(),
         ];

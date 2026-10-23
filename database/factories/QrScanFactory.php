@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Destination;
+use App\Models\QrCode;
 use App\Models\QrScan;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -17,7 +17,7 @@ class QrScanFactory extends Factory
     public function definition(): array
     {
         return [
-            'destination_id' => Destination::factory(),
+            'qr_code_id' => QrCode::factory(),
             'user_id' => null,
             'ip_address' => fake()->ipv4(),
             'user_agent' => fake()->userAgent(),

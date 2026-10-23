@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CultureArticles\Pages;
 
 use App\Enums\ContentStatus;
 use App\Enums\Permission;
+use App\Filament\Concerns\ModeratesContentActions;
 use App\Filament\Resources\CultureArticles\CultureArticleResource;
 use App\Services\CultureArticleService;
 use Filament\Actions\Action;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Gate;
 
 class EditCultureArticle extends EditRecord
 {
+    use ModeratesContentActions;
+
     protected static string $resource = CultureArticleResource::class;
 
     protected function getHeaderActions(): array
@@ -34,6 +37,8 @@ class EditCultureArticle extends EditRecord
                     && in_array($this->record->status, [ContentStatus::Pending, ContentStatus::Draft, ContentStatus::Archived], true))
                 ->requiresConfirmation()
                 ->action(fn () => $this->moderate(fn () => app(CultureArticleService::class)->approve($this->record, auth()->user()), 'Artikel diterbitkan.')),
+
+            $this->moderationAction(CultureArticleService::class, 'Artikel'),
 
             DeleteAction::make(),
         ];

@@ -7,6 +7,7 @@ use App\Enums\ContentStatus;
 use App\Models\Concerns\HasBookings;
 use App\Models\Concerns\HasFavorites;
 use App\Models\Concerns\HasItineraryItems;
+use App\Models\Concerns\HasQrCode;
 use App\Models\Concerns\HasReviews;
 use Database\Factories\AccommodationFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
 class Accommodation extends Model
 {
     /** @use HasFactory<AccommodationFactory> */
-    use HasBookings, HasFactory, HasFavorites, HasItineraryItems, HasReviews;
+    use HasBookings, HasFactory, HasFavorites, HasItineraryItems, HasQrCode, HasReviews;
 
     protected $fillable = [
         'manager_id',

@@ -20,14 +20,14 @@ Status: `PENDING` | `IN_PROGRESS` | `BLOCKED` | `READY_FOR_REVIEW` | `APPROVED`
 | 11 | Accommodation | READY_FOR_REVIEW | tanpa booking engine; sisi publik penginapan + filter |
 | 12 | Event & Calendar | READY_FOR_REVIEW | filter tanggal; `/event` + `/event/{slug}` |
 | 13 | Akun wisatawan & engagement | READY_FOR_REVIEW | favorit, ulasan + moderasi (`/favorit`) |
-| 14 | QR Smart Tourism | READY_FOR_REVIEW | token QR per destinasi, `/q/{token}` catat pindai + redirect, statistik di panel |
+| 14 | QR Smart Tourism | READY_FOR_REVIEW | QR semua jenis konten, `/q/{token}` catat pindai + redirect, statistik panel, papan QR cetak |
 | 15 | Itinerary dasar | READY_FOR_REVIEW | tanpa AI; `/rencana` + butir per hari, tambah cepat dari detail |
 | 16 | PWA installation & offline | READY_FOR_REVIEW | manifest, SW, cache aman |
 | 17 | Dashboard & analytics dasar | READY_FOR_REVIEW | KPI data aktual |
-| 18 | Notifications | PENDING | in-app |
-| 19 | AI Trip Planner | PENDING | butuh provider AI (biaya → approval) |
+| 18 | Notifications | READY_FOR_REVIEW | in-app (lonceng + /notifikasi) |
+| 19 | AI Trip Planner | READY_FOR_REVIEW | AI nyata (Kryptonlab) + simpan ke Rencana |
 | 20 | Booking & pembayaran | PENDING | payment gateway → approval |
-| 21 | Tourism Intelligence | PENDING | analitik lanjutan |
+| 21 | Tourism Intelligence | READY_FOR_REVIEW | analitik nyata + ekspor CSV |
 | 22 | Production readiness | PENDING | audit keamanan & deploy checklist |
 
 ## Urutan Dependencies

@@ -13,6 +13,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QrController;
+use App\Http\Controllers\QrPosterController;
 use App\Http\Controllers\SearchSuggestController;
 use App\Http\Controllers\TripPlannerController;
 use App\Http\Controllers\UmkmController;
@@ -31,7 +32,8 @@ require __DIR__.'/auth.php';
 // Sengaja PUBLIK (di luar public.auth) agar pemindaian tamu tetap tercatat;
 // tamu lalu diarahkan ke login dengan URL tujuan tersimpan.
 Route::get('/q/{token}', [QrController::class, 'scan'])->name('qr.scan');
-Route::get('/q/{destination:slug}/gambar', [QrController::class, 'image'])->name('qr.image');
+Route::get('/q/{token}/gambar', [QrController::class, 'image'])->name('qr.image');
+Route::get('/q/{token}/papan', [QrPosterController::class, 'show'])->name('qr.poster');
 
 // Halaman publik lainnya: wajib login (tamu dikembalikan ke beranda + popup).
 Route::middleware('public.auth')->group(function (): void {

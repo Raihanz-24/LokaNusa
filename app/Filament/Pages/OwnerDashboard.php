@@ -42,6 +42,9 @@ class OwnerDashboard extends Page
 
     public bool $bookingEnabled = false;
 
+    /** Periode analitik (hari); null = semua waktu. */
+    public ?int $days = 30;
+
     public static function canAccess(): bool
     {
         return auth()->user()?->role?->isOwner() ?? false;
@@ -49,11 +52,30 @@ class OwnerDashboard extends Page
 
     public function mount(): void
     {
+        $this->refreshData();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function periodOptions(): array
+    {
+        return [7 => '7 hari', 30 => '30 hari', 90 => '90 hari', 0 => 'Semua'];
+    }
+
+    public function setPeriod(int $days): void
+    {
+        $this->days = $days === 0 ? null : max(1, min(365, $days));
+        $this->refreshData();
+    }
+
+    public function refreshData(): void
+    {
         /** @var User $user */
         $user = auth()->user();
         $service = app(OwnerTrafficService::class);
 
-        $this->summary = $service->summary($user);
+        $this->summary = $service->summary($user, $this->days);
         $this->items = $service->items($user);
         $this->bookingEnabled = Features::booking();
     }

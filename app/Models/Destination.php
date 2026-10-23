@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ContentStatus;
 use App\Models\Concerns\HasFavorites;
 use App\Models\Concerns\HasItineraryItems;
+use App\Models\Concerns\HasQrCode;
 use App\Models\Concerns\HasReviews;
 use Database\Factories\DestinationFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,12 +18,11 @@ use Illuminate\Support\Str;
 class Destination extends Model
 {
     /** @use HasFactory<DestinationFactory> */
-    use HasFactory, HasFavorites, HasItineraryItems, HasReviews;
+    use HasFactory, HasFavorites, HasItineraryItems, HasQrCode, HasReviews;
 
     protected $fillable = [
         'name',
         'slug',
-        'qr_token',
         'description',
         'region_id',
         'village_id',
@@ -60,12 +60,6 @@ class Destination extends Model
 
     protected static function booted(): void
     {
-        static::creating(function (Destination $destination): void {
-            if (blank($destination->qr_token)) {
-                $destination->qr_token = self::generateQrToken();
-            }
-        });
-
         static::saving(function (Destination $destination): void {
             if (blank($destination->slug)) {
                 $destination->slug = Str::slug($destination->name);
@@ -98,36 +92,11 @@ class Destination extends Model
     }
 
     /**
-     * Token QR publik (dibuat otomatis saat konten pertama kali disimpan).
+     * Token QR publik (dibuat malas oleh trait HasQrCode).
      */
     public function ensureQrToken(): string
     {
-        if (blank($this->qr_token)) {
-            $this->qr_token = self::generateQrToken();
-            $this->saveQuietly();
-        }
-
-        return (string) $this->qr_token;
-    }
-
-    /**
-     * Token acak yang tidak bertabrakan dengan destinasi lain.
-     */
-    public static function generateQrToken(): string
-    {
-        do {
-            $token = Str::lower(Str::random(16));
-        } while (self::query()->where('qr_token', $token)->exists());
-
-        return $token;
-    }
-
-    /**
-     * URL publik yang ditanam pada QR.
-     */
-    public function qrUrl(): string
-    {
-        return route('qr.scan', $this->ensureQrToken());
+        return $this->qrToken();
     }
 
     public function scans(): HasMany

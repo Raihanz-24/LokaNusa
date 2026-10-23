@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Destinations\Pages;
 
 use App\Enums\ContentStatus;
 use App\Enums\Permission;
+use App\Filament\Concerns\ModeratesContentActions;
 use App\Filament\Concerns\ReverseGeocodesAddress;
 use App\Filament\Resources\Destinations\DestinationResource;
 use App\Services\DestinationService;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Gate;
 
 class EditDestination extends EditRecord
 {
+    use ModeratesContentActions;
     use ReverseGeocodesAddress;
 
     protected static string $resource = DestinationResource::class;
@@ -37,6 +39,8 @@ class EditDestination extends EditRecord
                     && in_array($this->record->status, [ContentStatus::Pending, ContentStatus::Draft, ContentStatus::Archived], true))
                 ->requiresConfirmation()
                 ->action(fn () => $this->moderate(fn () => app(DestinationService::class)->approve($this->record, auth()->user()), 'Destinasi diterbitkan.')),
+
+            $this->moderationAction(DestinationService::class, 'Destinasi'),
 
             DeleteAction::make(),
         ];

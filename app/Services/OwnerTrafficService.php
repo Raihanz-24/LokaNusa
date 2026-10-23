@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Enums\ContentStatus;
+use App\Filament\Resources\Accommodations\AccommodationResource;
+use App\Filament\Resources\Destinations\DestinationResource;
+use App\Filament\Resources\UmkmBusinesses\UmkmBusinessResource;
 use App\Models\Accommodation;
 use App\Models\Booking;
 use App\Models\Destination;
@@ -14,6 +17,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Ringkasan trafik usaha milik PEMILIK (data aktual, tanpa data palsu).
@@ -48,11 +52,13 @@ class OwnerTrafficService
      *     purchases: array{bookings: int, units: int, revenue: int}
      * }
      */
-    public function summary(User $user): array
+    public function summary(User $user, ?int $days = null): array
     {
         $destinationIds = $user->destinations()->pluck('id')->all();
         $businessIds = $user->umkmBusinesses()->pluck('id')->all();
         $accommodationIds = $user->accommodations()->pluck('id')->all();
+
+        $since = $days !== null ? Carbon::today()->subDays(max(1, $days) - 1) : null;
 
         return [
             'has_business' => $destinationIds !== [] || $businessIds !== [] || $accommodationIds !== [],
@@ -61,32 +67,50 @@ class OwnerTrafficService
                 'umkm' => $this->contentCount($user->umkmBusinesses()),
                 'penginapan' => $this->contentCount($user->accommodations()),
             ],
-            'rating' => $this->ratingStats($destinationIds, $businessIds, $accommodationIds),
-            'favorites' => $this->favoritesCount($destinationIds, $businessIds, $accommodationIds),
-            'stays' => $this->stayStats($user),
-            'purchases' => $this->purchaseStats($user),
+            'rating' => $this->ratingStats($destinationIds, $businessIds, $accommodationIds, $since),
+            'favorites' => $this->favoritesCount($destinationIds, $businessIds, $accommodationIds, $since),
+            'stays' => $this->stayStats($user, $since),
+            'purchases' => $this->purchaseStats($user, $since),
         ];
     }
 
     /**
      * Daftar konten/usaha milik pengguna beserta statusnya.
      *
-     * @return array<int, array{module: string, name: string, status: ContentStatus}>
+     * @return array<int, array{module: string, name: string, status: ContentStatus, slug: string, edit_url: ?string}>
      */
     public function items(User $user): array
     {
         $items = [];
 
         foreach ($user->destinations()->latest()->get() as $destination) {
-            $items[] = ['module' => 'Destinasi', 'name' => $destination->name, 'status' => $destination->status, 'slug' => $destination->slug];
+            $items[] = [
+                'module' => 'Destinasi',
+                'name' => $destination->name,
+                'status' => $destination->status,
+                'slug' => $destination->slug,
+                'edit_url' => DestinationResource::getUrl('edit', ['record' => $destination]),
+            ];
         }
 
         foreach ($user->umkmBusinesses()->latest()->get() as $business) {
-            $items[] = ['module' => 'UMKM', 'name' => $business->name, 'status' => $business->status, 'slug' => $business->slug];
+            $items[] = [
+                'module' => 'UMKM',
+                'name' => $business->name,
+                'status' => $business->status,
+                'slug' => $business->slug,
+                'edit_url' => UmkmBusinessResource::getUrl('edit', ['record' => $business]),
+            ];
         }
 
         foreach ($user->accommodations()->latest()->get() as $accommodation) {
-            $items[] = ['module' => 'Penginapan', 'name' => $accommodation->name, 'status' => $accommodation->status, 'slug' => $accommodation->slug];
+            $items[] = [
+                'module' => 'Penginapan',
+                'name' => $accommodation->name,
+                'status' => $accommodation->status,
+                'slug' => $accommodation->slug,
+                'edit_url' => AccommodationResource::getUrl('edit', ['record' => $accommodation]),
+            ];
         }
 
         return $items;
@@ -111,9 +135,9 @@ class OwnerTrafficService
      * @param  array<int, int>  $accommodationIds
      * @return array{average: ?float, count: int}
      */
-    private function ratingStats(array $destinationIds, array $businessIds, array $accommodationIds): array
+    private function ratingStats(array $destinationIds, array $businessIds, array $accommodationIds, ?Carbon $since = null): array
     {
-        $query = $this->reviewQuery($destinationIds, $businessIds, $accommodationIds);
+        $query = $this->reviewQuery($destinationIds, $businessIds, $accommodationIds, $since);
 
         $count = (clone $query)->count();
 
@@ -128,9 +152,10 @@ class OwnerTrafficService
      * @param  array<int, int>  $businessIds
      * @param  array<int, int>  $accommodationIds
      */
-    private function favoritesCount(array $destinationIds, array $businessIds, array $accommodationIds): int
+    private function favoritesCount(array $destinationIds, array $businessIds, array $accommodationIds, ?Carbon $since = null): int
     {
         return Favorite::query()
+            ->when($since !== null, fn (Builder $query) => $query->where('created_at', '>=', $since))
             ->where(function (Builder $query) use ($destinationIds, $businessIds, $accommodationIds): void {
                 $query->orWhere(fn (Builder $q) => $q->where('favoritable_type', Destination::class)->whereIn('favoritable_id', $destinationIds))
                     ->orWhere(fn (Builder $q) => $q->where('favoritable_type', UmkmBusiness::class)->whereIn('favoritable_id', $businessIds))
@@ -145,9 +170,10 @@ class OwnerTrafficService
      * @param  array<int, int>  $accommodationIds
      * @return Builder<int, Review>
      */
-    private function reviewQuery(array $destinationIds, array $businessIds, array $accommodationIds): Builder
+    private function reviewQuery(array $destinationIds, array $businessIds, array $accommodationIds, ?Carbon $since = null): Builder
     {
         return Review::query()
+            ->when($since !== null, fn (Builder $query) => $query->where('created_at', '>=', $since))
             ->where('status', ContentStatus::Published->value)
             ->where(function (Builder $query) use ($destinationIds, $businessIds, $accommodationIds): void {
                 $query->orWhere(fn (Builder $q) => $q->where('reviewable_type', Destination::class)->whereIn('reviewable_id', $destinationIds))
@@ -161,9 +187,10 @@ class OwnerTrafficService
      *
      * @return array{bookings: int, nights: int, revenue: int}
      */
-    private function stayStats(User $user): array
+    private function stayStats(User $user, ?Carbon $since = null): array
     {
         $query = Booking::query()
+            ->when($since !== null, fn (Builder $query) => $query->where('created_at', '>=', $since))
             ->paid()
             ->where('owner_id', $user->getKey())
             ->where('bookable_type', Accommodation::class);
@@ -180,9 +207,10 @@ class OwnerTrafficService
      *
      * @return array{bookings: int, units: int, revenue: int}
      */
-    private function purchaseStats(User $user): array
+    private function purchaseStats(User $user, ?Carbon $since = null): array
     {
         $query = Booking::query()
+            ->when($since !== null, fn (Builder $query) => $query->where('created_at', '>=', $since))
             ->paid()
             ->where('owner_id', $user->getKey())
             ->where('bookable_type', UmkmProduct::class);

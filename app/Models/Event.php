@@ -6,6 +6,7 @@ use App\Enums\ContentStatus;
 use App\Enums\EventType;
 use App\Models\Concerns\HasFavorites;
 use App\Models\Concerns\HasItineraryItems;
+use App\Models\Concerns\HasQrCode;
 use App\Models\Concerns\HasReviews;
 use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
-    use HasFactory, HasFavorites, HasItineraryItems, HasReviews;
+    use HasFactory, HasFavorites, HasItineraryItems, HasQrCode, HasReviews;
 
     protected $fillable = [
         'organizer_id',

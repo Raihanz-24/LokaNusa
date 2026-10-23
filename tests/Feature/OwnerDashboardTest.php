@@ -156,4 +156,52 @@ class OwnerDashboardTest extends TestCase
 
         $this->assertSame([], $items);
     }
+
+    public function test_filter_periode_membatasi_trafik(): void
+    {
+        $user = $this->owner();
+        $business = UmkmBusiness::factory()->for($user, 'owner')->create();
+
+        // Ulasan lama (60 hari) & baru.
+        Review::factory()->published()->create([
+            'reviewable_type' => UmkmBusiness::class,
+            'reviewable_id' => $business->getKey(),
+            'rating' => 5,
+            'created_at' => now()->subDays(60),
+        ]);
+        Review::factory()->published()->create([
+            'reviewable_type' => UmkmBusiness::class,
+            'reviewable_id' => $business->getKey(),
+            'rating' => 3,
+            'created_at' => now(),
+        ]);
+
+        $service = app(OwnerTrafficService::class);
+
+        $this->assertSame(2, $service->summary($user, null)['rating']['count']);
+        $this->assertSame(1, $service->summary($user, 30)['rating']['count']);
+    }
+
+    public function test_daftar_konten_menyertakan_tautan_kelola(): void
+    {
+        $user = $this->owner();
+        UmkmBusiness::factory()->for($user, 'owner')->create();
+
+        $items = app(OwnerTrafficService::class)->items($user);
+
+        $this->assertNotNull($items[0]['edit_url']);
+        $this->assertStringContainsString('/edit', $items[0]['edit_url']);
+    }
+
+    public function test_halaman_dasbor_menampilkan_filter_periode(): void
+    {
+        $user = $this->owner();
+        UmkmBusiness::factory()->for($user, 'owner')->create();
+
+        $this->actingAs($user)
+            ->get(OwnerDashboard::getUrl())
+            ->assertOk()
+            ->assertSee('Periode')
+            ->assertSee('30 hari');
+    }
 }

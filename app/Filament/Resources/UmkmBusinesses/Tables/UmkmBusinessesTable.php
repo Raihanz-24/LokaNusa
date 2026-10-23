@@ -5,8 +5,10 @@ namespace App\Filament\Resources\UmkmBusinesses\Tables;
 use App\Enums\BusinessType;
 use App\Enums\ContentStatus;
 use App\Enums\Permission;
+use App\Filament\Pages\QrStats;
 use App\Filament\Support\ModerationActions;
 use App\Services\UmkmService;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -68,6 +70,12 @@ class UmkmBusinessesTable
             ->recordActions([
                 ...ModerationActions::make(UmkmService::class, Permission::ManageUmkm),
                 EditAction::make(),
+
+                Action::make('qr')
+                    ->label('QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('gray')
+                    ->url(fn ($record): string => QrStats::getUrl(['type' => 'umkm', 'id' => $record->getKey()])),
                 DeleteAction::make(),
             ]);
     }

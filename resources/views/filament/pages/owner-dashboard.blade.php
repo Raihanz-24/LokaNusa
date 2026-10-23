@@ -24,6 +24,24 @@
             </div>
         </x-filament::section>
     @else
+        {{-- Filter periode --}}
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+            <span class="text-sm text-gray-500">Periode:</span>
+            @foreach ($this->periodOptions() as $value => $label)
+                <button
+                    type="button"
+                    wire:click="setPeriod({{ $value }})"
+                    @class([
+                        'rounded-full border px-4 py-1.5 text-sm font-medium transition',
+                        'border-primary-600 bg-primary-600 text-white' => ($days ?? 0) === $value,
+                        'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' => ($days ?? 0) !== $value,
+                    ])
+                >
+                    {{ $label }}
+                </button>
+            @endforeach
+        </div>
+
         {{-- Ringkasan konten --}}
         <x-filament::section heading="Konten Saya">
             <div class="grid gap-4 sm:grid-cols-3">
@@ -89,7 +107,8 @@
                             <tr class="text-left text-gray-500">
                                 <th class="pb-2 pr-4">Modul</th>
                                 <th class="pb-2 pr-4">Nama</th>
-                                <th class="pb-2">Status</th>
+                                <th class="pb-2 pr-4">Status</th>
+                                <th class="pb-2">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -97,10 +116,20 @@
                                 <tr class="border-t border-gray-100">
                                     <td class="py-2 pr-4 text-gray-500">{{ $item['module'] }}</td>
                                     <td class="py-2 pr-4 font-medium text-gray-900">{{ $item['name'] }}</td>
-                                    <td class="py-2">
+                                    <td class="py-2 pr-4">
                                         <x-filament::badge :color="$item['status']->color()">
                                             {{ $item['status']->label() }}
                                         </x-filament::badge>
+                                    </td>
+                                    <td class="py-2">
+                                        @if ($item['edit_url'])
+                                            <a href="{{ $item['edit_url'] }}"
+                                               class="text-sm font-medium text-primary-600 hover:underline">
+                                                Kelola
+                                            </a>
+                                        @else
+                                            —
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

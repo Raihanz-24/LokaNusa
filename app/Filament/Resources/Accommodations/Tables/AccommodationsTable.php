@@ -5,8 +5,10 @@ namespace App\Filament\Resources\Accommodations\Tables;
 use App\Enums\AccommodationType;
 use App\Enums\ContentStatus;
 use App\Enums\Permission;
+use App\Filament\Pages\QrStats;
 use App\Filament\Support\ModerationActions;
 use App\Services\AccommodationService;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -62,6 +64,12 @@ class AccommodationsTable
             ->recordActions([
                 ...ModerationActions::make(AccommodationService::class, Permission::ManageAccommodations),
                 EditAction::make(),
+
+                Action::make('qr')
+                    ->label('QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('gray')
+                    ->url(fn ($record): string => QrStats::getUrl(['type' => 'penginapan', 'id' => $record->getKey()])),
                 DeleteAction::make(),
             ]);
     }

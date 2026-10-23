@@ -5,8 +5,10 @@ namespace App\Filament\Resources\CultureArticles\Tables;
 use App\Enums\ContentStatus;
 use App\Enums\CultureType;
 use App\Enums\Permission;
+use App\Filament\Pages\QrStats;
 use App\Filament\Support\ModerationActions;
 use App\Services\CultureArticleService;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -63,6 +65,12 @@ class CultureArticlesTable
             ->recordActions([
                 ...ModerationActions::make(CultureArticleService::class, Permission::ManageCulture),
                 EditAction::make(),
+
+                Action::make('qr')
+                    ->label('QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('gray')
+                    ->url(fn ($record): string => QrStats::getUrl(['type' => 'budaya', 'id' => $record->getKey()])),
                 DeleteAction::make(),
             ]);
     }
