@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             RegionSeeder::class,
             SuperAdminSeeder::class,
             HomeContentSeeder::class,
+            HomeShortcutSeeder::class,
         ]);
     }
 }

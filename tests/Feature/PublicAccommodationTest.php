@@ -78,6 +78,37 @@ class PublicAccommodationTest extends TestCase
             ->assertSee('750.000');
     }
 
+    public function test_tombol_booking_demo_tampil_saat_fitur_pemesanan_nonaktif(): void
+    {
+        config(['lokanusa.features.booking' => false]);
+
+        $accommodation = Accommodation::factory()->published()->create([
+            'name' => 'Hotel Demo',
+            'price_per_night' => 500000,
+        ]);
+
+        $this->actingAs($this->wisatawan())->get('/penginapan/'.$accommodation->slug)
+            ->assertSuccessful()
+            ->assertSee('Pesan Kamar')
+            ->assertSee('DEMO')
+            ->assertDontSee('Pesan Sekarang');
+    }
+
+    public function test_form_pemesanan_asli_tampil_saat_fitur_pemesanan_aktif(): void
+    {
+        config(['lokanusa.features.booking' => true]);
+
+        $accommodation = Accommodation::factory()->published()->create([
+            'name' => 'Hotel Nyata',
+            'price_per_night' => 500000,
+        ]);
+
+        $this->actingAs($this->wisatawan())->get('/penginapan/'.$accommodation->slug)
+            ->assertSuccessful()
+            ->assertSee('Pesan Sekarang')
+            ->assertDontSee('Pesan Kamar');
+    }
+
     public function test_penginapan_draf_tidak_dapat_diakses_publik(): void
     {
         $accommodation = Accommodation::factory()->create(['name' => 'Belum Tayang Penginapan']);

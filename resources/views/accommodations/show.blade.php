@@ -174,9 +174,7 @@
                 @endif
 
                 @unless (\App\Support\Features::booking())
-                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
-                        Pemesanan daring belum tersedia. Silakan hubungi penginapan langsung.
-                    </div>
+                    <x-demo-booking :accommodation="$accommodation" />
                 @endunless
             </aside>
         </div>
