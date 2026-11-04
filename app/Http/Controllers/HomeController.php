@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Accommodation;
 use App\Models\Destination;
 use App\Models\HomeBanner;
 use App\Models\UmkmBusiness;
@@ -33,6 +34,7 @@ class HomeController extends Controller
             'focusRegion' => RegionResolver::focus(),
             'totalDestinations' => Destination::query()->published()->count(),
             'totalUmkm' => UmkmBusiness::query()->published()->count(),
+            'totalAccommodations' => Accommodation::query()->published()->count(),
         ]);
     }
 

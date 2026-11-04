@@ -19,59 +19,119 @@
     @php
         $focusRegion = \App\Support\RegionResolver::focus();
         $locationLabel = $focusRegion?->fullName() ?? 'Probolinggo, Jawa Timur';
+        $locationShort = $focusRegion
+            ? preg_replace('/^(Kabupaten|Kota)\s+/i', '', $focusRegion->name)
+            : 'Probolinggo';
         $greetingName = auth()->check() ? Str::before(auth()->user()->name, ' ') : __('ui.guest_name');
+        $exploreActive = request()->routeIs('destinations.*', 'umkm.*', 'accommodations.*', 'culture.*', 'events.*');
+        $navBase = 'inline-flex items-center rounded-full px-3 py-2 text-sm font-medium transition';
+        $navActive = 'bg-emerald-50 text-emerald-800';
+        $navIdle = 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
     @endphp
 
     {{-- Header utama: selalu tampil (sticky) saat digulir --}}
-    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-            {{-- Logo brand (tampil di layar lebar) --}}
-            <a href="{{ route('home') }}" class="hidden shrink-0 items-center gap-2 md:flex" aria-label="LokaNusa">
+    <header data-public-header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 shadow-none backdrop-blur-xl transition-shadow">
+        <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
+            {{-- Logo brand (desktop) --}}
+            <a href="{{ route('home') }}" class="hidden shrink-0 items-center gap-2 lg:flex" aria-label="LokaNusa">
                 <img src="{{ asset('images/brand/logo-mark-sm.png') }}" alt="LokaNusa"
-                     class="h-10 w-10" width="96" height="96">
+                     class="h-9 w-9" width="96" height="96">
+                <span class="text-lg font-bold tracking-tight text-slate-900">LokaNusa</span>
             </a>
 
-            {{-- Foto/inisial profil --}}
+            {{-- Foto/inisial profil (mobile, tetap di kiri) --}}
             <a href="{{ auth()->check() ? route('profile.edit') : '#' }}"
                @guest data-auth-open @endguest
-               class="shrink-0" aria-label="{{ __('ui.menu_profile') }}">
+               class="shrink-0 lg:hidden" aria-label="{{ __('ui.menu_profile') }}">
                 @auth
-                    <span class="grid h-11 w-11 place-items-center rounded-full bg-emerald-100 text-base font-semibold text-emerald-700 ring-2 ring-emerald-200">
+                    <span class="grid h-10 w-10 place-items-center rounded-full bg-emerald-100 text-base font-semibold text-emerald-700 ring-2 ring-emerald-200">
                         {{ strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}
                     </span>
                 @else
-                    <span class="grid h-11 w-11 place-items-center rounded-full bg-slate-100 text-slate-500 ring-2 ring-slate-200">
-                        <x-heroicon name="UserCircle" class="h-7 w-7" />
+                    <span class="grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500 ring-2 ring-slate-200">
+                        <x-heroicon name="UserCircle" class="h-6 w-6" />
                     </span>
                 @endauth
             </a>
 
-            {{-- Sapaan + lokasi --}}
-            <div class="min-w-0 flex-1">
-                <p class="truncate text-base font-semibold leading-tight text-slate-800">{{ __('ui.greeting_hello') }}, {{ $greetingName }}</p>
-                <p class="truncate text-xs text-slate-500">{{ $locationLabel }}</p>
+            {{-- Sapaan + lokasi (mobile) --}}
+            <div class="min-w-0 flex-1 lg:hidden">
+                <p class="flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-tight text-slate-800">
+                    <img src="{{ asset('images/brand/logo-mark-sm.png') }}" alt=""
+                         class="h-4 w-4 shrink-0" width="96" height="96">
+                    <span class="truncate">{{ __('ui.greeting_hello') }}, {{ $greetingName }}</span>
+                </p>
+                <p class="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
+                    <x-heroicon name="map-pin" class="h-3 w-3 shrink-0 text-emerald-600" />
+                    <span class="truncate">{{ $locationLabel }}</span>
+                </p>
             </div>
 
-            {{-- Navigasi desktop --}}
-            <nav class="hidden items-center gap-4 text-sm font-medium text-slate-600 md:flex">
-                <a href="{{ route('home') }}" class="hover:text-emerald-700">{{ __('ui.nav_home') }}</a>
-                <a href="{{ route('destinations.index') }}" class="hover:text-emerald-700">{{ __('ui.nav_destinations') }}</a>
-                <a href="{{ route('umkm.index') }}" class="hover:text-emerald-700">{{ __('ui.nav_umkm') }}</a>
-                <a href="{{ route('culture.index') }}" class="hover:text-emerald-700">{{ __('ui.nav_culture') }}</a>
-                <a href="{{ route('events.index') }}" class="hover:text-emerald-700">{{ __('ui.nav_events') }}</a>
-                <a href="{{ route('accommodations.index') }}" class="hover:text-emerald-700">{{ __('ui.nav_accommodations') }}</a>
-                <a href="{{ route('trip-planner.index') }}" class="hover:text-emerald-700">{{ __('ui.nav_trip_planner') }}</a>
-                <a href="{{ route('explore.map') }}" class="hover:text-emerald-700">{{ __('ui.nav_map') }}</a>
+            {{-- Navigasi desktop: 5 pintu masuk utama. --}}
+            <nav class="hidden items-center gap-0.5 text-slate-600 lg:flex" aria-label="Navigasi utama">
+                <a href="{{ route('home') }}" @if (request()->routeIs('home')) aria-current="page" @endif
+                   class="{{ $navBase }} {{ request()->routeIs('home') ? $navActive : $navIdle }}">
+                    {{ __('ui.nav_home') }}
+                </a>
+
+                <details class="group relative" data-nav-dropdown>
+                    <summary @if ($exploreActive) aria-current="page" @endif
+                             class="{{ $navBase }} {{ $exploreActive ? $navActive : $navIdle }} cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                        {{ __('ui.nav_explore') }}
+                        <x-heroicon name="chevron-down" class="ml-1 h-3.5 w-3.5 transition group-open:rotate-180" />
+                    </summary>
+
+                    <div class="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10">
+                        @php
+                            $exploreLinks = [
+                                ['route' => 'destinations.index', 'icon' => 'MapPin', 'label' => __('ui.nav_destinations')],
+                                ['route' => 'umkm.index', 'icon' => 'BuildingStorefront', 'label' => __('ui.nav_umkm')],
+                                ['route' => 'accommodations.index', 'icon' => 'Home', 'label' => __('ui.nav_accommodations')],
+                                ['route' => 'culture.index', 'icon' => 'AcademicCap', 'label' => __('ui.nav_culture')],
+                                ['route' => 'events.index', 'icon' => 'CalendarDays', 'label' => __('ui.nav_events')],
+                            ];
+                        @endphp
+
+                        @foreach ($exploreLinks as $link)
+                            <a href="{{ route($link['route']) }}"
+                               class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50">
+                                <span class="grid h-8 w-8 place-items-center rounded-full bg-emerald-50 text-emerald-700">
+                                    <x-heroicon :name="$link['icon']" class="h-4 w-4" />
+                                </span>
+                                {{ $link['label'] }}
+                            </a>
+                        @endforeach
+                    </div>
+                </details>
+
+                <a href="{{ route('trip-planner.index') }}" @if (request()->routeIs('trip-planner.*')) aria-current="page" @endif
+                   class="{{ $navBase }} {{ request()->routeIs('trip-planner.*') ? $navActive : $navIdle }}">
+                    {{ __('ui.nav_trip_planner') }}
+                </a>
+
+                <a href="{{ route('explore.map') }}" @if (request()->routeIs('explore.*')) aria-current="page" @endif
+                   class="{{ $navBase }} {{ request()->routeIs('explore.*') ? $navActive : $navIdle }}">
+                    {{ __('ui.nav_map') }}
+                </a>
+
+                <a href="{{ auth()->check() ? route('itineraries.index') : route('login') }}" @if (request()->routeIs('itineraries.*')) aria-current="page" @endif
+                   class="{{ $navBase }} {{ request()->routeIs('itineraries.*') ? $navActive : $navIdle }}">
+                    {{ __('ui.nav_plans') }}
+                </a>
             </nav>
 
-            {{-- Switch bahasa --}}
-            <x-locale-switch class="hidden shrink-0 sm:inline-flex" variant="light" />
+            {{-- Chip lokasi desktop --}}
+            <span class="ml-2 hidden items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 xl:inline-flex">
+                <x-heroicon name="map-pin" class="h-3.5 w-3.5 text-emerald-600" />
+                {{ $locationShort }}
+            </span>
 
-            {{-- Ikon notifikasi (in-app) --}}
-            <x-notification-bell />
-
-            {{-- Menu titik-tiga (dropdown) --}}
-            <x-public-user-menu />
+            {{-- Aksi kanan --}}
+            <div class="ml-auto flex shrink-0 items-center gap-0.5">
+                <x-locale-switch class="hidden lg:inline-flex" variant="light" />
+                <x-notification-bell />
+                <x-public-user-menu />
+            </div>
         </div>
     </header>
 
@@ -101,6 +161,39 @@
     @guest
         <x-auth-prompt :auto-open="session('auth_prompt', false)" />
     @endguest
+
+    @once
+        <script>
+            (function () {
+                var header = document.querySelector('[data-public-header]');
+
+                if (header) {
+                    var updateHeader = function () {
+                        var scrolled = window.scrollY > 8;
+                        header.classList.toggle('shadow-md', scrolled);
+                        header.classList.toggle('shadow-slate-900/5', scrolled);
+                    };
+
+                    updateHeader();
+                    window.addEventListener('scroll', updateHeader, { passive: true });
+                }
+
+                function closeNavDropdowns(except) {
+                    document.querySelectorAll('details[data-nav-dropdown][open]').forEach(function (item) {
+                        if (item !== except) item.open = false;
+                    });
+                }
+
+                document.addEventListener('click', function (event) {
+                    closeNavDropdowns(event.target.closest('details[data-nav-dropdown]'));
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') closeNavDropdowns(null);
+                });
+            })();
+        </script>
+    @endonce
 
     @stack('scripts')
 </body>
