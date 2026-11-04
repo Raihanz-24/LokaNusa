@@ -46,7 +46,63 @@ class AiItineraryPlanTest extends TestCase
 
         $this->assertTrue($planner->wantsItinerary('Susun itinerary 3 hari di Probolinggo'));
         $this->assertTrue($planner->wantsItinerary('buatkan rencana perjalanan 2 hari'));
+        $this->assertTrue($planner->wantsItinerary('buatkan planner perjalanan tiga hari'));
         $this->assertFalse($planner->wantsItinerary('Rekomendasi kuliner dong'));
+    }
+
+    public function test_parse_memperbaiki_kutip_jam_yang_rusak(): void
+    {
+        $planner = app(ItineraryPlanner::class);
+
+        $broken = '{"intro":"Jalan-jalan","title":"Perbaikan","days":[{"day":1,"activities":['
+            .'{"start":"17:00,"end":"18:00","title":"Makan malam","ref":null,"cost":null}]}]}';
+
+        $plan = $planner->parse($broken);
+
+        $this->assertNotNull($plan);
+        $this->assertSame('17:00', $plan['days'][0]['activities'][0]['start']);
+        $this->assertSame('18:00', $plan['days'][0]['activities'][0]['end']);
+    }
+
+    public function test_balasan_markdown_diubah_ulang_menjadi_json_rencana(): void
+    {
+        config()->set('ai.base_url', 'https://ai.test/v1');
+        config()->set('ai.key', 'secret');
+        config()->set('ai.model', 'deepseek');
+        config()->set('ai.plan_max_tokens', 3500);
+
+        Http::fakeSequence()
+            ->push([
+                'choices' => [['message' => ['content' => "Hari 1\n- 08:00 Sarapan\n- 10:00 Wisata"]]],
+                'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 20, 'total_tokens' => 30],
+            ])
+            ->push([
+                'choices' => [['message' => ['content' => $this->jsonPlan()]]],
+                'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 20, 'total_tokens' => 30],
+            ]);
+
+        $response = $this->actingAs($this->wisatawan())
+            ->postJson('/ai-trip-planner/kirim', ['message' => 'Susun itinerary 3 hari di Probolinggo']);
+
+        $response->assertSuccessful();
+
+        $messages = $response->json('messages');
+        $last = end($messages);
+
+        $this->assertTrue($last['has_plan']);
+        $this->assertSame('Bromo 3 Hari', TripPlannerMessage::query()
+            ->where('role', 'assistant')
+            ->latest('id')
+            ->first()
+            ->plan['title']);
+
+        Http::assertSentCount(2);
+
+        $second = Http::recorded()[1][0];
+
+        $this->assertSame(3500, $second['max_tokens']);
+        $this->assertSame(0.2, $second['temperature']);
+        $this->assertStringContainsString('JSON converter', $second['messages'][0]['content']);
     }
 
     public function test_parse_menolak_teks_bukan_json(): void

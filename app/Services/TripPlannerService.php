@@ -220,7 +220,7 @@ class TripPlannerService
             ),
             $user,
             'trip_planner',
-            $wantsPlan ? 1600 : null,
+            $wantsPlan ? (int) config('ai.plan_max_tokens', 3500) : null,
         );
 
         // AI tidak tersedia -> balasan cadangan deterministik.
@@ -232,12 +232,44 @@ class TripPlannerService
         if ($wantsPlan) {
             $plan = $this->planner->parse($answer);
 
+            // Model kadang membalas Markdown atau JSON rusak. Minta sekali lagi
+            // secara khusus agar jawaban yang sama diubah menjadi JSON ketat.
+            if ($plan === null && trim($answer) !== '') {
+                $plan = $this->repairPlan($user, $answer, $text);
+            }
+
             if ($plan !== null && ! empty($plan['days'])) {
                 return ['text' => $this->planner->toChatMarkdown($plan), 'plan' => $plan];
             }
         }
 
         return ['text' => $answer, 'plan' => null];
+    }
+
+    /**
+     * Minta AI mengubah balasan yang tidak valid (Markdown/JSON rusak) menjadi
+     * JSON rencana yang ketat. Hanya dipanggil saat percobaan pertama gagal.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function repairPlan(User $user, string $answer, string $request): ?array
+    {
+        $repaired = $this->ai->chat(
+            [
+                ['role' => 'system', 'content' => $this->planner->repairInstructions()],
+                ['role' => 'user', 'content' => "Original request:\n".$request."\n\nItinerary to convert:\n".$answer],
+            ],
+            $user,
+            'trip_planner',
+            (int) config('ai.plan_max_tokens', 3500),
+            0.2,
+        );
+
+        if ($repaired === null) {
+            return null;
+        }
+
+        return $this->planner->parse($repaired);
     }
 
     /**

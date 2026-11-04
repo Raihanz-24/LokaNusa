@@ -31,4 +31,8 @@ return [
     // Jumlah maksimum token keluaran (balasan asisten).
     'max_tokens' => (int) env('AI_MAX_TOKENS', 800),
 
+    // Batas token khusus saat AI menyusun itinerary terstruktur (JSON).
+    // Lebih besar dari balasan biasa agar rencana multi-hari tidak terpotong.
+    'plan_max_tokens' => (int) env('AI_PLAN_MAX_TOKENS', 3500),
+
 ];

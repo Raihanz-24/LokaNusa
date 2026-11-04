@@ -45,10 +45,14 @@ class ItineraryPlanner
         $text = mb_strtolower($message);
 
         $keywords = [
-            'itinerary', 'itinerari', 'rencana perjalanan', 'rencana wisata',
-            'susun perjalanan', 'susun rencana', 'buatkan rencana', 'buat rencana',
+            'itinerary', 'itinerari', 'itinerary otomatis', 'rencana perjalanan',
+            'rencana wisata', 'rencana liburan', 'rencana harian', 'planner',
+            'planner perjalanan', 'trip planner', 'susun perjalanan', 'susun rencana',
+            'susun itinerary', 'susun wisata', 'buatkan rencana', 'buat rencana',
+            'buatkan itinerary', 'buat itinerary', 'bikin itinerary', 'bikin rencana',
             'jadwal perjalanan', 'jadwal wisata', 'trip plan', 'plan trip',
-            'rencanakan', 'agenda perjalanan', 'rencana harian',
+            'plan perjalanan', 'rencanakan', 'agenda perjalanan', 'agenda wisata',
+            'rute perjalanan', 'rute wisata',
         ];
 
         if ($this->containsAny($text, $keywords)) {
@@ -56,7 +60,12 @@ class ItineraryPlanner
         }
 
         // Pola "3 hari", "perjalanan 2 hari", "5 hari 4 malam".
-        return (bool) preg_match('/\b\d+\s*(hari|day|d)\b/u', $text);
+        if (preg_match('/\b\d+\s*(hari|day|d)\b/u', $text)) {
+            return true;
+        }
+
+        // Pola angka dalam kata: "tiga hari", "dua malam".
+        return (bool) preg_match('/\b(satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)\s*(hari|malam|day|days)\b/u', $text);
     }
 
     /**
@@ -68,7 +77,7 @@ class ItineraryPlanner
             __('ui.trip_planner_plan_instruction', ['region' => $this->regionName()]),
             '',
             'Respond with a SINGLE JSON object ONLY (no markdown fences, no extra text) using this schema:',
-            '{"intro":"<1-2 sentence friendly reply>","title":"<short trip title>","days":[{"day":1,"activities":[{"start":"08:00","end":"10:00","title":"<activity>","ref":"<exact place name from the list below, or null>","cost":50000,"cost_note":"<e.g. per person / per night / null>","note":"<optional short tip>"}]}]}',
+            $this->jsonSchema(),
             '',
             'Rules:',
             '- Use 24-hour "HH:MM" times. Every activity needs "title".',
@@ -95,6 +104,59 @@ class ItineraryPlanner
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Skema JSON yang dipakai baik untuk permintaan awal maupun perbaikan.
+     */
+    public function jsonSchema(): string
+    {
+        return '{"intro":"<1-2 sentence friendly reply>","title":"<short trip title>","days":[{"day":1,"activities":[{"start":"08:00","end":"10:00","title":"<activity>","ref":"<exact place name from the list below, or null>","cost":50000,"cost_note":"<e.g. per person / per night / null>","note":"<optional short tip>"}]}]}';
+    }
+
+    /**
+     * Instruksi untuk meminta AI KEDUA kali: mengubah jawaban yang tidak valid
+     * (Markdown, JSON rusak, atau JSON terpotong) menjadi JSON ketat.
+     */
+    public function repairInstructions(): string
+    {
+        return implode("\n", [
+            'You are a JSON converter for travel itineraries.',
+            'Convert the itinerary in the user message into ONE valid JSON object and output ONLY that JSON.',
+            'Do not use markdown fences. Do not add explanations before or after the JSON.',
+            'Use this exact schema:',
+            $this->jsonSchema(),
+            '',
+            'Rules:',
+            '- Keep every day and activity from the source. Never invent places that are not in the source.',
+            '- Use 24-hour "HH:MM" strings for "start" and "end"; use null when unknown.',
+            '- Every activity must have a non-empty "title".',
+            '- "ref" = the exact place name mentioned in the source, or null.',
+            '- "cost" must be an integer number of Indonesian Rupiah, or null.',
+            '- Keep the original language for "intro", "title", "note", and "cost_note".',
+            '- Make sure the JSON is complete and syntactically valid (quotes and commas included).',
+        ]);
+    }
+
+    /**
+     * Perbaikan JSON ringan untuk kesalahan umum dari model bahasa.
+     */
+    private function repairJson(string $json): string
+    {
+        // Kutip "pintar" -> kutip JSON biasa.
+        $json = str_replace(
+            ["\u{201C}", "\u{201D}", "\u{2018}", "\u{2019}"],
+            ['"', '"', "'", "'"],
+            $json,
+        );
+
+        // Kasus "17:00,"end":"18:00" (kutip penutup hilang setelah jam).
+        $json = preg_replace('/"(\d{1,2}:\d{2}),(?=\s*")/u', '"$1",', $json) ?? $json;
+
+        // Koma berlebih sebelum penutup objek/array.
+        $json = preg_replace('/,\s*([}\]])/u', '$1', $json) ?? $json;
+
+        return trim($json);
     }
 
     /**
@@ -165,6 +227,10 @@ class ItineraryPlanner
         }
 
         $decoded = json_decode($json, true);
+
+        if (! is_array($decoded)) {
+            $decoded = json_decode($this->repairJson($json), true);
+        }
 
         if (! is_array($decoded) || ! isset($decoded['days']) || ! is_array($decoded['days'])) {
             return null;

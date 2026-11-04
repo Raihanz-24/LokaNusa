@@ -33,7 +33,7 @@ class AiClient
      *
      * @param  array<int, array{role: string, content: string}>  $messages
      */
-    public function chat(array $messages, ?User $user = null, string $context = 'trip_planner', ?int $maxTokens = null): ?string
+    public function chat(array $messages, ?User $user = null, string $context = 'trip_planner', ?int $maxTokens = null, ?float $temperature = null): ?string
     {
         if (! $this->configured()) {
             return null;
@@ -46,7 +46,7 @@ class AiClient
                 ->post(rtrim((string) config('ai.base_url'), '/').'/chat/completions', [
                     'model' => config('ai.model'),
                     'messages' => $messages,
-                    'temperature' => (float) config('ai.temperature', 0.7),
+                    'temperature' => $temperature ?? (float) config('ai.temperature', 0.7),
                     'max_tokens' => $maxTokens ?? (int) config('ai.max_tokens', 800),
                 ]);
         } catch (Throwable $exception) {
