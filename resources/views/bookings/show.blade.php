@@ -1,4 +1,4 @@
-<x-layouts.public :title="'Pesanan '.$booking->code.' — LokaNusa'" meta-description="Detail pesanan demo LokaNusa.">
+<x-layouts.public :title="'Pesanan '.$booking->code.' — LokaNusa'" meta-description="Detail pesanan LokaNusa.">
     <div class="mx-auto max-w-3xl px-4 py-10">
         <nav class="mb-4 text-sm text-slate-500">
             <a href="{{ route('bookings.index') }}" class="hover:text-emerald-700">Pesanan Saya</a>
@@ -11,7 +11,7 @@
         @endif
 
         <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            <strong>Mode Demo.</strong> Pembayaran di halaman ini hanya simulasi untuk keperluan uji coba. Tidak ada uang yang benar-benar dibayarkan.
+            <strong>Mode Simulasi.</strong> Pembayaran di halaman ini hanya simulasi untuk keperluan uji coba. Tidak ada uang yang benar-benar dibayarkan.
         </div>
 
         <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
@@ -73,7 +73,7 @@
                 </div>
                 @if ($booking->payment_method)
                     <div class="flex justify-between py-2">
-                        <dt class="text-slate-500">Metode (demo)</dt>
+                        <dt class="text-slate-500">Metode</dt>
                         <dd class="font-medium text-slate-800">{{ $methods[$booking->payment_method] ?? $booking->payment_method }}</dd>
                     </div>
                     <div class="flex justify-between py-2">
@@ -87,7 +87,7 @@
                 <form method="POST" action="{{ route('bookings.pay', $booking->code) }}" class="mt-6 space-y-4 border-t border-slate-100 pt-6">
                     @csrf
                     <div>
-                        <label class="text-sm font-medium text-slate-700" for="method">Metode pembayaran (demo)</label>
+                        <label class="text-sm font-medium text-slate-700" for="method">Metode pembayaran</label>
                         <select id="method" name="payment_method" required
                                 class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                             @foreach ($methods as $key => $label)
@@ -97,7 +97,7 @@
                     </div>
                     <button type="submit"
                             class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-700">
-                        Bayar Sekarang (Demo)
+                        Bayar Sekarang
                     </button>
                 </form>
 
@@ -111,7 +111,7 @@
                 </form>
             @elseif ($booking->status === \App\Enums\BookingStatus::Paid)
                 <div class="mt-6 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                    Pesanan ini sudah ditandai <strong>lunas (demo)</strong>. Terima kasih!
+                    Pesanan ini sudah ditandai <strong>lunas (simulasi)</strong>. Terima kasih!
                 </div>
             @else
                 <div class="mt-6 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600">

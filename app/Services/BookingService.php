@@ -20,9 +20,9 @@ use InvalidArgumentException;
 class BookingService
 {
     public const PAYMENT_METHODS = [
-        'transfer' => 'Transfer Bank (Demo)',
-        'qris' => 'QRIS (Demo)',
-        'ewallet' => 'E-Wallet (Demo)',
+        'transfer' => 'Transfer Bank',
+        'qris' => 'QRIS',
+        'ewallet' => 'E-Wallet',
     ];
 
     public function __construct(private readonly NotificationService $notifications) {}

@@ -15,7 +15,7 @@
 
         <div class="mt-3 flex snap-x gap-3 overflow-x-auto pb-1">
             @foreach ($items as $card)
-                <div class="w-40 shrink-0 snap-start sm:w-44">
+                <div class="w-52 shrink-0 snap-start sm:w-60">
                     <x-recommendation-card :card="$card" />
                 </div>
             @endforeach

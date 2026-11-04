@@ -90,7 +90,7 @@ class PublicAccommodationTest extends TestCase
         $this->actingAs($this->wisatawan())->get('/penginapan/'.$accommodation->slug)
             ->assertSuccessful()
             ->assertSee('Pesan Kamar')
-            ->assertSee('DEMO')
+            ->assertSee('SIMULASI')
             ->assertSee('BCA Virtual Account')
             ->assertSee('QRIS')
             ->assertSee('GoPay')

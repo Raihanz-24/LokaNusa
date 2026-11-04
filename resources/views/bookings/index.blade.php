@@ -1,8 +1,8 @@
-<x-layouts.public title="Pesanan Saya — LokaNusa" meta-description="Daftar pesanan demo Anda di LokaNusa.">
+<x-layouts.public title="Pesanan Saya — LokaNusa" meta-description="Daftar pesanan Anda di LokaNusa.">
     <div class="mx-auto max-w-4xl px-4 py-10">
         <h1 class="text-2xl font-bold text-slate-900">Pesanan Saya</h1>
         <p class="mt-1 text-sm text-slate-500">
-            Pemesanan bersifat <span class="font-semibold text-amber-600">DEMO</span> — pembayaran hanya simulasi, tidak ada transaksi nyata.
+            Pemesanan ini hanya <span class="font-semibold text-amber-600">simulasi</span> — tidak ada transaksi nyata.
         </p>
 
         @if (session('status'))

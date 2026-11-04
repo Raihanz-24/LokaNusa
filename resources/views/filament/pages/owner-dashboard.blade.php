@@ -79,8 +79,8 @@
 
         {{-- Trafik pemesanan (hanya bila modul pemesanan aktif) --}}
         @if ($bookingEnabled)
-            <x-filament::section heading="Trafik Pemesanan (Demo)">
-                <x-filament::badge color="warning" class="mb-3">Demo — bukan transaksi nyata</x-filament::badge>
+            <x-filament::section heading="Trafik Pemesanan">
+                <x-filament::badge color="warning" class="mb-3">Simulasi — bukan transaksi nyata</x-filament::badge>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="rounded-xl border border-gray-200 p-4">
                         <p class="text-sm text-gray-500">Menginap</p>

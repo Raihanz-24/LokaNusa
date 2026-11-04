@@ -165,7 +165,7 @@ class BookingTest extends TestCase
             ->get(route('accommodations.show', $accommodation->slug))
             ->assertOk()
             ->assertSee('Pesan Menginap')
-            ->assertSee('DEMO');
+            ->assertSee('SIMULASI');
     }
 
     public function test_halaman_umkm_menampilkan_tombol_beli_demo(): void
@@ -179,7 +179,7 @@ class BookingTest extends TestCase
         $this->actingAs($this->wisatawan())
             ->get(route('umkm.show', $business->slug))
             ->assertOk()
-            ->assertSee('Beli (Demo)');
+            ->assertSee('Beli Sekarang');
     }
 
     public function test_rute_pesanan_404_saat_fitur_nonaktif(): void
@@ -210,6 +210,6 @@ class BookingTest extends TestCase
 
         $this->actingAs($user)->get(route('umkm.show', $business->slug))
             ->assertOk()
-            ->assertDontSee('Beli (Demo)');
+            ->assertDontSee('Beli Sekarang');
     }
 }

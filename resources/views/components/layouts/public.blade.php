@@ -33,16 +33,16 @@
     <header data-public-header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 shadow-none backdrop-blur-xl transition-shadow">
         <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
             {{-- Logo brand (desktop) --}}
-            <a href="{{ route('home') }}" class="hidden shrink-0 items-center gap-2 lg:flex" aria-label="LokaNusa">
+            <a href="{{ route('home') }}" class="hidden shrink-0 items-center gap-2 md:flex" aria-label="LokaNusa">
                 <img src="{{ asset('images/brand/logo-mark-sm.png') }}" alt="LokaNusa"
                      class="h-9 w-9" width="96" height="96">
-                <span class="text-lg font-bold tracking-tight text-slate-900">LokaNusa</span>
+                <span class="hidden text-lg font-bold tracking-tight text-slate-900 lg:inline">LokaNusa</span>
             </a>
 
             {{-- Foto/inisial profil (mobile, tetap di kiri) --}}
             <a href="{{ auth()->check() ? route('profile.edit') : '#' }}"
                @guest data-auth-open @endguest
-               class="shrink-0 lg:hidden" aria-label="{{ __('ui.menu_profile') }}">
+               class="shrink-0 md:hidden" aria-label="{{ __('ui.menu_profile') }}">
                 @auth
                     <span class="grid h-10 w-10 place-items-center rounded-full bg-emerald-100 text-base font-semibold text-emerald-700 ring-2 ring-emerald-200">
                         {{ strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}
@@ -55,7 +55,7 @@
             </a>
 
             {{-- Sapaan + lokasi (mobile) --}}
-            <div class="min-w-0 flex-1 lg:hidden">
+            <div class="min-w-0 flex-1 md:hidden">
                 <p class="flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-tight text-slate-800">
                     <img src="{{ asset('images/brand/logo-mark-sm.png') }}" alt=""
                          class="h-4 w-4 shrink-0" width="96" height="96">
@@ -68,7 +68,7 @@
             </div>
 
             {{-- Navigasi desktop: 5 pintu masuk utama. --}}
-            <nav class="hidden items-center gap-0.5 text-slate-600 lg:flex" aria-label="Navigasi utama">
+            <nav class="hidden items-center gap-0.5 text-slate-600 md:flex" aria-label="Navigasi utama">
                 <a href="{{ route('home') }}" @if (request()->routeIs('home')) aria-current="page" @endif
                    class="{{ $navBase }} {{ request()->routeIs('home') ? $navActive : $navIdle }}">
                     {{ __('ui.nav_home') }}

@@ -98,7 +98,7 @@ class PublicUmkmTest extends TestCase
             ->assertSee('Beli Produk')
             ->assertSee('GoPay')
             ->assertSee('images/payments/bca.svg', false)
-            ->assertDontSee('Beli (Demo)');
+            ->assertDontSee('Beli Sekarang');
     }
 
     public function test_umkm_draf_tidak_dapat_diakses_publik(): void

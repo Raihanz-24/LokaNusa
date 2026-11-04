@@ -63,8 +63,8 @@
 @endphp
 
 {{--
-    Pembayaran MODE DEMO (murni tampilan, tanpa server/admin).
-    Tidak menyimpan data, tidak menagih pembayaran. Jelas diberi label DEMO.
+    Pembayaran MODE SIMULASI (murni tampilan, tanpa server/admin).
+    Tidak menyimpan data, tidak menagih pembayaran. Jelas diberi label SIMULASI.
 --}}
 <div data-demo-payment-root data-price="{{ $price }}" data-mode="{{ $mode }}" data-unit="{{ $unitLabel }}">
     <button type="button" data-demo-open
@@ -72,7 +72,7 @@
         {{ $cta }}
     </button>
     <p class="mt-2 text-center text-xs text-slate-500">
-        Simulasi pemesanan &amp; pembayaran (demo) — tidak ada transaksi nyata.
+        Simulasi pemesanan &amp; pembayaran — tidak ada transaksi nyata.
     </p>
 
     <div data-demo-modal class="fixed inset-0 z-50 hidden">
@@ -82,7 +82,7 @@
             <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
                 <div class="flex items-center gap-2">
                     <h2 class="text-lg font-semibold text-slate-900">Pembayaran</h2>
-                    <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">DEMO</span>
+                    <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">SIMULASI</span>
                 </div>
                 <button type="button" data-demo-close
                         class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100"
@@ -158,7 +158,7 @@
                             <span class="font-medium text-slate-800" data-demo-qty-value>—</span>
                         </div>
                         <div class="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
-                            <span class="font-semibold text-slate-700">Total (demo)</span>
+                            <span class="font-semibold text-slate-700">Total (simulasi)</span>
                             <span class="font-bold text-emerald-700" data-demo-total>—</span>
                         </div>
                     </div>
@@ -214,7 +214,7 @@
                         @endforeach
 
                         <p class="rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-700">
-                            Mode <strong>DEMO</strong> — pilih metode mana pun. Tidak ada tagihan nyata.
+                            Mode <strong>SIMULASI</strong> — pilih metode mana pun. Tidak ada tagihan nyata.
                         </p>
                     </div>
 
@@ -263,7 +263,7 @@
                                 <x-heroicon name="clipboard" class="h-3.5 w-3.5" />
                                 <span>Salin Nomor</span>
                             </button>
-                            <p class="mt-2 text-xs text-slate-400">a.n. LokaNusa (Demo)</p>
+                            <p class="mt-2 text-xs text-slate-400">a.n. LokaNusa</p>
                         </div>
 
                         <div data-demo-qris-box class="hidden p-4 text-center">
@@ -284,7 +284,7 @@
 
                     <button type="button" data-demo-paid
                             class="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                        Saya Sudah Bayar (Demo)
+                        Saya Sudah Bayar
                     </button>
                 </div>
 
@@ -294,7 +294,7 @@
                         <x-heroicon name="check-circle" class="h-10 w-10 text-emerald-600" />
                     </div>
                     <h2 class="mt-3 text-xl font-bold text-slate-900">Pembayaran Berhasil</h2>
-                    <p class="mt-1 text-sm text-slate-500">Status pesanan demo: <span class="font-semibold text-emerald-700">Lunas (simulasi)</span></p>
+                    <p class="mt-1 text-sm text-slate-500">Status pesanan: <span class="font-semibold text-emerald-700">Lunas (simulasi)</span></p>
                     <p class="mt-3 text-2xl font-bold text-slate-900" data-demo-amount-2>—</p>
 
                     <dl class="mt-5 space-y-2 rounded-xl border border-slate-200 p-4 text-left text-sm">
@@ -313,7 +313,7 @@
                     </dl>
 
                     <p class="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                        Tidak ada pesanan tersimpan dan tidak ada tagihan nyata. Ini hanya tampilan demo.
+                        Tidak ada pesanan tersimpan dan tidak ada tagihan nyata. Ini hanya tampilan simulasi.
                     </p>
 
                     <button type="button" data-demo-close
@@ -523,7 +523,7 @@
                 }
 
                 function newCode() {
-                    return 'LK-DEMO-' + randomDigits(6);
+                    return 'LK-SIM-' + randomDigits(6);
                 }
 
                 root.querySelector('[data-demo-open]').addEventListener('click', open);
