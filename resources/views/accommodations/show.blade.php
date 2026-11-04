@@ -174,7 +174,9 @@
                 @endif
 
                 @unless (\App\Support\Features::booking())
-                    <x-demo-booking :accommodation="$accommodation" />
+                    <x-demo-payment mode="stay" :name="$accommodation->name"
+                                    :price="(int) ($accommodation->price_per_night ?? 0)"
+                                    cta="Pesan Kamar" />
                 @endunless
             </aside>
         </div>

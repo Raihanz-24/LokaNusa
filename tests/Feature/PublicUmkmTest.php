@@ -78,6 +78,29 @@ class PublicUmkmTest extends TestCase
             ->assertDontSee('Produk Belum Tayang');
     }
 
+    public function test_produk_umkm_menampilkan_pembayaran_demo_saat_booking_nonaktif(): void
+    {
+        config(['lokanusa.features.booking' => false]);
+
+        $business = UmkmBusiness::factory()->published()->create([
+            'name' => 'Keripik Bu Siti',
+        ]);
+
+        UmkmProduct::factory()->create([
+            'umkm_business_id' => $business->id,
+            'name' => 'Keripik Pisang Cokelat',
+            'price' => 15000,
+            'unit' => 'pack',
+        ]);
+
+        $this->actingAs($this->wisatawan())->get('/umkm/'.$business->slug)
+            ->assertSuccessful()
+            ->assertSee('Beli Produk')
+            ->assertSee('GoPay')
+            ->assertSee('images/payments/bca.svg', false)
+            ->assertDontSee('Beli (Demo)');
+    }
+
     public function test_umkm_draf_tidak_dapat_diakses_publik(): void
     {
         $business = UmkmBusiness::factory()->create(['name' => 'Belum Tayang UMKM']);

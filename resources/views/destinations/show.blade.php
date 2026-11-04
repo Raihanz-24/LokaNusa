@@ -90,6 +90,15 @@
                     @endif
                 </div>
 
+                @if ((int) $destination->ticket_price > 0)
+                    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+                        <h2 class="mb-3 font-semibold text-slate-900">Beli Tiket Masuk</h2>
+                        <x-demo-payment mode="ticket" :name="$destination->name"
+                                        :price="(int) $destination->ticket_price"
+                                        cta="Beli Tiket" />
+                    </div>
+                @endif
+
                 @if (! empty($destination->opening_hours))
                     <div class="rounded-2xl border border-slate-200 bg-white p-5">
                         <h2 class="font-semibold text-slate-900">Jam Operasional</h2>

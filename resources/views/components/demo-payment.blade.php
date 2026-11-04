@@ -1,8 +1,29 @@
-@props(['accommodation'])
+@props([
+    'name',
+    'price' => 0,
+    'mode' => 'stay',
+    'cta' => null,
+    'subtitle' => null,
+    'unit' => null,
+])
 
 @php
-    $price = (int) ($accommodation->price_per_night ?? 0);
+    $price = (int) $price;
+    $mode = in_array($mode, ['stay', 'ticket', 'product'], true) ? $mode : 'stay';
+    $cta = $cta ?? match ($mode) {
+        'stay' => 'Pesan Kamar',
+        'ticket' => 'Beli Tiket',
+        'product' => 'Beli Produk',
+    };
     $guestName = auth()->user()->name ?? '';
+    $uid = 'dp-'.\Illuminate\Support\Str::random(6);
+    $unitLabel = $unit ?: ($mode === 'ticket' ? 'tiket' : 'pcs');
+    $priceLabel = match ($mode) {
+        'stay' => 'Harga / malam',
+        'ticket' => 'Harga tiket',
+        'product' => 'Harga satuan',
+    };
+    $qtyLabel = $mode === 'ticket' ? 'Jumlah tiket' : 'Jumlah';
 
     // Daftar metode pembayaran (tampilan demo, terinspirasi Snap/Midtrans).
     $paymentGroups = [
@@ -42,13 +63,13 @@
 @endphp
 
 {{--
-    Pemesanan penginapan MODE DEMO (murni tampilan, tanpa server/admin).
+    Pembayaran MODE DEMO (murni tampilan, tanpa server/admin).
     Tidak menyimpan data, tidak menagih pembayaran. Jelas diberi label DEMO.
 --}}
-<div data-demo-booking-root data-price="{{ $price }}">
+<div data-demo-payment-root data-price="{{ $price }}" data-mode="{{ $mode }}" data-unit="{{ $unitLabel }}">
     <button type="button" data-demo-open
             class="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
-        Pesan Kamar
+        {{ $cta }}
     </button>
     <p class="mt-2 text-center text-xs text-slate-500">
         Simulasi pemesanan &amp; pembayaran (demo) — tidak ada transaksi nyata.
@@ -71,50 +92,70 @@
             </div>
 
             <div class="min-h-0 flex-1 overflow-y-auto">
-                {{-- Langkah 1: detail menginap --}}
+                {{-- Langkah 1: detail pesanan --}}
                 <div data-demo-step="1" class="space-y-3 p-5">
                     <div>
                         <p class="text-sm text-slate-500">Kamu memesan</p>
-                        <p class="font-semibold text-slate-900">{{ $accommodation->name }}</p>
+                        <p class="font-semibold text-slate-900">{{ $name }}</p>
+                        @if ($subtitle)
+                            <p class="text-sm text-slate-500">{{ $subtitle }}</p>
+                        @endif
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    @if ($mode === 'stay')
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-sm font-medium text-slate-700" for="{{ $uid }}-start">Check-in</label>
+                                <input id="{{ $uid }}-start" type="date" data-demo-start
+                                       class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700" for="{{ $uid }}-end">Check-out</label>
+                                <input id="{{ $uid }}-end" type="date" data-demo-end
+                                       class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            </div>
+                        </div>
+                    @elseif ($mode === 'ticket')
                         <div>
-                            <label class="text-sm font-medium text-slate-700" for="demo-start-{{ $accommodation->getKey() }}">Check-in</label>
-                            <input id="demo-start-{{ $accommodation->getKey() }}" type="date" data-demo-start
+                            <label class="text-sm font-medium text-slate-700" for="{{ $uid }}-date">Tanggal kunjungan</label>
+                            <input id="{{ $uid }}-date" type="date" data-demo-date
                                    class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                         </div>
+                    @endif
+
+                    @if (in_array($mode, ['ticket', 'product'], true))
                         <div>
-                            <label class="text-sm font-medium text-slate-700" for="demo-end-{{ $accommodation->getKey() }}">Check-out</label>
-                            <input id="demo-end-{{ $accommodation->getKey() }}" type="date" data-demo-end
-                                   class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            <label class="text-sm font-medium text-slate-700" for="{{ $uid }}-qty">{{ $qtyLabel }}</label>
+                            <input id="{{ $uid }}-qty" type="number" data-demo-qty value="1"
+                                   min="1" max="{{ $mode === 'ticket' ? 10 : 100 }}"
+                                   class="mt-1 w-28 rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                         </div>
-                    </div>
+                    @endif
 
                     <div>
-                        <label class="text-sm font-medium text-slate-700" for="demo-name-{{ $accommodation->getKey() }}">Nama pemesan</label>
-                        <input id="demo-name-{{ $accommodation->getKey() }}" type="text" data-demo-name maxlength="100"
+                        <label class="text-sm font-medium text-slate-700" for="{{ $uid }}-name">Nama pemesan</label>
+                        <input id="{{ $uid }}-name" type="text" data-demo-name maxlength="100"
                                value="{{ $guestName }}" placeholder="Nama lengkap"
                                class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                     </div>
 
                     <div>
-                        <label class="text-sm font-medium text-slate-700" for="demo-phone-{{ $accommodation->getKey() }}">No. HP / WhatsApp</label>
-                        <input id="demo-phone-{{ $accommodation->getKey() }}" type="tel" data-demo-phone maxlength="30"
+                        <label class="text-sm font-medium text-slate-700" for="{{ $uid }}-phone">No. HP / WhatsApp</label>
+                        <input id="{{ $uid }}-phone" type="tel" data-demo-phone maxlength="30"
                                placeholder="08xxxxxxxxxx"
                                class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                     </div>
 
                     <div class="rounded-xl bg-slate-50 p-3 text-sm">
                         <div class="flex items-center justify-between text-slate-600">
-                            <span>Harga / malam</span>
+                            <span>{{ $priceLabel }}</span>
                             <span class="font-medium text-slate-800">
                                 {{ $price > 0 ? 'Rp'.number_format($price, 0, ',', '.') : 'Belum tersedia' }}
                             </span>
                         </div>
                         <div class="mt-1 flex items-center justify-between text-slate-600">
-                            <span>Jumlah malam</span>
-                            <span class="font-medium text-slate-800" data-demo-nights>—</span>
+                            <span data-demo-qty-label>{{ $mode === 'stay' ? 'Jumlah malam' : $qtyLabel }}</span>
+                            <span class="font-medium text-slate-800" data-demo-qty-value>—</span>
                         </div>
                         <div class="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
                             <span class="font-semibold text-slate-700">Total (demo)</span>
@@ -143,7 +184,7 @@
                                 <p class="text-lg font-bold text-slate-900" data-demo-total-2>—</p>
                             </div>
                         </div>
-                        <p class="mt-1.5 text-xs text-slate-500" data-demo-summary-stay>—</p>
+                        <p class="mt-1.5 text-xs text-slate-500" data-demo-summary>—</p>
                     </div>
 
                     <div class="space-y-5 p-5">
@@ -158,7 +199,7 @@
                                                 data-prefix="{{ $item['prefix'] }}"
                                                 data-label="{{ $item['label'] }}"
                                                 class="flex w-full items-center gap-3 bg-white px-4 py-3 text-left transition hover:bg-slate-50">
-                                            <span class="shrink-0">
+                                            <span class="flex h-10 w-24 shrink-0 items-center">
                                                 <x-payment-logo :name="$item['logo']" />
                                             </span>
                                             <span class="min-w-0 flex-1">
@@ -207,7 +248,7 @@
 
                     <div class="mt-5 rounded-xl border border-slate-200">
                         <div class="flex items-center gap-3 border-b border-slate-100 p-4">
-                            <span class="shrink-0" data-demo-method-logo></span>
+                            <span class="flex h-10 w-24 shrink-0 items-center" data-demo-method-logo></span>
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-slate-800" data-demo-method-label>—</p>
                                 <p class="text-xs text-slate-500" data-demo-method-sub>—</p>
@@ -266,8 +307,8 @@
                             <dd class="text-right font-medium text-slate-800" data-demo-method-4>—</dd>
                         </div>
                         <div class="flex items-center justify-between gap-3">
-                            <dt class="text-slate-500">Menginap</dt>
-                            <dd class="text-right font-medium text-slate-800" data-demo-stay-4>—</dd>
+                            <dt class="text-slate-500">Rincian</dt>
+                            <dd class="text-right font-medium text-slate-800" data-demo-summary-4>—</dd>
                         </div>
                     </dl>
 
@@ -340,9 +381,10 @@
                 root.dataset.ready = '1';
 
                 var price = Number(root.dataset.price || 0);
+                var mode = root.dataset.mode || 'stay';
+                var unit = root.dataset.unit || 'pcs';
                 var modal = root.querySelector('[data-demo-modal]');
-                var panel = modal.querySelector(':scope > div:last-child');
-                var scroller = panel.querySelector('.overflow-y-auto');
+                var scroller = modal.querySelector('.overflow-y-auto');
                 var steps = {
                     1: root.querySelector('[data-demo-step="1"]'),
                     2: root.querySelector('[data-demo-step="2"]'),
@@ -351,9 +393,11 @@
                 };
                 var start = root.querySelector('[data-demo-start]');
                 var end = root.querySelector('[data-demo-end]');
+                var date = root.querySelector('[data-demo-date]');
+                var qty = root.querySelector('[data-demo-qty]');
                 var name = root.querySelector('[data-demo-name]');
                 var phone = root.querySelector('[data-demo-phone]');
-                var nightsEl = root.querySelector('[data-demo-nights]');
+                var qtyEl = root.querySelector('[data-demo-qty-value]');
                 var totalEl = root.querySelector('[data-demo-total]');
                 var errorEl = steps[1].querySelector('[data-demo-error]');
 
@@ -367,10 +411,17 @@
 
                 var today = new Date();
                 var tomorrow = new Date(today.getTime() + 86400000);
-                start.min = localISO(today);
-                end.min = localISO(tomorrow);
-                start.value = localISO(today);
-                end.value = localISO(tomorrow);
+
+                if (start && end) {
+                    start.min = localISO(today);
+                    end.min = localISO(tomorrow);
+                    start.value = localISO(today);
+                    end.value = localISO(tomorrow);
+                }
+                if (date) {
+                    date.min = localISO(today);
+                    date.value = localISO(today);
+                }
 
                 function nights() {
                     var a = new Date(start.value + 'T00:00:00');
@@ -379,28 +430,41 @@
                     return isNaN(n) ? 0 : n;
                 }
 
+                function units() {
+                    if (mode === 'stay') return nights();
+                    return qty ? Math.max(0, parseInt(qty.value, 10) || 0) : 1;
+                }
+
                 function amount() {
-                    return nights() * price;
+                    return units() * price;
+                }
+
+                function unitText(n) {
+                    if (mode === 'stay') return n + ' malam';
+                    return n + ' ' + unit;
                 }
 
                 function recalc() {
-                    var n = nights();
-                    nightsEl.textContent = n > 0 ? n + ' malam' : '—';
+                    var n = units();
+                    qtyEl.textContent = n > 0 ? unitText(n) : '—';
                     totalEl.textContent = n > 0 && price > 0 ? rupiah(n * price) : '—';
                 }
 
-                start.addEventListener('change', function () {
-                    if (end.value <= start.value) {
-                        var next = new Date(start.value + 'T00:00:00');
-                        next.setDate(next.getDate() + 1);
-                        end.value = localISO(next);
-                    }
-                    var minEnd = new Date(start.value + 'T00:00:00');
-                    minEnd.setDate(minEnd.getDate() + 1);
-                    end.min = localISO(minEnd);
-                    recalc();
-                });
-                end.addEventListener('change', recalc);
+                if (start) {
+                    start.addEventListener('change', function () {
+                        if (end.value <= start.value) {
+                            var next = new Date(start.value + 'T00:00:00');
+                            next.setDate(next.getDate() + 1);
+                            end.value = localISO(next);
+                        }
+                        var minEnd = new Date(start.value + 'T00:00:00');
+                        minEnd.setDate(minEnd.getDate() + 1);
+                        end.min = localISO(minEnd);
+                        recalc();
+                    });
+                }
+                if (end) end.addEventListener('change', recalc);
+                if (qty) qty.addEventListener('input', recalc);
                 recalc();
 
                 function show(step) {
@@ -447,8 +511,15 @@
                     errorEl.classList.remove('hidden');
                 }
 
-                function summaryStay() {
-                    return fmtDate(start.value) + ' – ' + fmtDate(end.value) + ' · ' + nights() + ' malam';
+                function summary() {
+                    var n = units();
+                    if (mode === 'stay') {
+                        return fmtDate(start.value) + ' – ' + fmtDate(end.value) + ' · ' + n + ' malam';
+                    }
+                    if (mode === 'ticket') {
+                        return fmtDate(date.value) + ' · ' + n + ' tiket';
+                    }
+                    return n + ' ' + unit;
                 }
 
                 function newCode() {
@@ -466,7 +537,9 @@
 
                 root.querySelector('[data-demo-next]').addEventListener('click', function () {
                     errorEl.classList.add('hidden');
-                    if (nights() < 1) return fail('Tanggal check-out harus setelah check-in.');
+                    if (mode === 'stay' && nights() < 1) return fail('Tanggal check-out harus setelah check-in.');
+                    if (mode !== 'stay' && units() < 1) return fail('Jumlah harus minimal 1.');
+                    if (mode === 'ticket' && !date.value) return fail('Tanggal kunjungan wajib diisi.');
                     if (!name.value.trim()) return fail('Nama pemesan wajib diisi.');
                     if (!phone.value.trim() || phone.value.replace(/\D/g, '').length < 8) return fail('Nomor HP/WhatsApp tidak valid.');
 
@@ -474,7 +547,7 @@
                     root.dataset.code = code;
                     root.querySelector('[data-demo-code]').textContent = code;
                     root.querySelector('[data-demo-total-2]').textContent = price > 0 ? rupiah(amount()) : 'Harga belum tersedia';
-                    root.querySelector('[data-demo-summary-stay]').textContent = summaryStay();
+                    root.querySelector('[data-demo-summary]').textContent = summary();
                     show(2);
                 });
 
@@ -531,7 +604,7 @@
 
                     root.querySelector('[data-demo-amount]').textContent = price > 0 ? rupiah(amount()) : 'Harga belum tersedia';
                     root.querySelector('[data-demo-code-3]').textContent = root.dataset.code || '';
-                    root.querySelector('[data-demo-method-logo]').innerHTML = row.querySelector('svg').outerHTML;
+                    root.querySelector('[data-demo-method-logo]').innerHTML = row.querySelector('img').outerHTML;
                     root.querySelector('[data-demo-method-label]').textContent = label;
                     root.querySelector('[data-demo-method-sub]').textContent = group === 'bank'
                         ? 'Virtual Account'
@@ -656,13 +729,13 @@
                     root.querySelector('[data-demo-amount-2]').textContent = price > 0 ? rupiah(amount()) : 'Harga belum tersedia';
                     root.querySelector('[data-demo-code-4]').textContent = root.dataset.code || '—';
                     root.querySelector('[data-demo-method-4]').textContent = label;
-                    root.querySelector('[data-demo-stay-4]').textContent = summaryStay();
+                    root.querySelector('[data-demo-summary-4]').textContent = summary();
                     show(4);
                 });
             }
 
             function boot() {
-                document.querySelectorAll('[data-demo-booking-root]').forEach(init);
+                document.querySelectorAll('[data-demo-payment-root]').forEach(init);
             }
 
             document.addEventListener('DOMContentLoaded', boot);

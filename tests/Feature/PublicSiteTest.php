@@ -96,6 +96,36 @@ class PublicSiteTest extends TestCase
             ->assertSee('Candi Buddha terbesar');
     }
 
+    public function test_detail_destinasi_menampilkan_pembayaran_demo_tiket(): void
+    {
+        config(['lokanusa.features.booking' => false]);
+
+        $destination = Destination::factory()->published()->create([
+            'name' => 'Kawah Ijen',
+            'ticket_price' => 25000,
+        ]);
+
+        $this->actingAs($this->wisatawan())
+            ->get('/destinasi/'.$destination->slug)
+            ->assertSuccessful()
+            ->assertSee('Beli Tiket')
+            ->assertSee('BCA Virtual Account')
+            ->assertSee('QRIS');
+    }
+
+    public function test_destinasi_gratis_tidak_menampilkan_pembayaran(): void
+    {
+        $destination = Destination::factory()->published()->create([
+            'name' => 'Alun-Alun Gratis',
+            'ticket_price' => 0,
+        ]);
+
+        $this->actingAs($this->wisatawan())
+            ->get('/destinasi/'.$destination->slug)
+            ->assertSuccessful()
+            ->assertDontSee('Beli Tiket');
+    }
+
     public function test_destinasi_draf_tidak_dapat_diakses_publik(): void
     {
         $destination = Destination::factory()->create(['name' => 'Belum Tayang']);
