@@ -50,6 +50,7 @@ class AiClient
 
         $attempts = min(5, max(1, (int) config('ai.retries', 3)));
         $delayMs = min(5000, max(0, (int) config('ai.retry_delay_ms', 400)));
+        $currentMaxTokens = $maxTokens ?? (int) config('ai.max_tokens', 2000);
 
         for ($attempt = 1; $attempt <= $attempts; $attempt++) {
             try {
@@ -60,7 +61,7 @@ class AiClient
                         'model' => config('ai.model'),
                         'messages' => $messages,
                         'temperature' => $temperature ?? (float) config('ai.temperature', 0.7),
-                        'max_tokens' => $maxTokens ?? (int) config('ai.max_tokens', 800),
+                        'max_tokens' => $currentMaxTokens,
                     ]);
             } catch (Throwable $exception) {
                 Log::warning('AI request failed', [
@@ -98,6 +99,10 @@ class AiClient
             $payload = $response->json();
             $content = data_get($payload, 'choices.0.message.content');
 
+            // Catat token walau jawaban kosong: penyedia tetap menagih token
+            // reasoning/keluaran yang sudah terpakai.
+            $this->recordUsage($user, $context, $payload['usage'] ?? []);
+
             // Sebagian gateway mengirim content sebagai array bagian teks.
             if (is_array($content)) {
                 $content = collect($content)
@@ -106,14 +111,25 @@ class AiClient
             }
 
             if (! is_string($content) || trim($content) === '') {
+                $message = data_get($payload, 'choices.0.message', []);
+                $reasoning = is_array($message) ? ($message['reasoning_content'] ?? null) : null;
+
                 Log::warning('AI response has no usable content', [
                     'attempt' => $attempt,
                     'attempts' => $attempts,
                     'finish_reason' => data_get($payload, 'choices.0.finish_reason'),
+                    'max_tokens' => $currentMaxTokens,
+                    'reasoning_chars' => is_string($reasoning) ? mb_strlen($reasoning) : 0,
+                    'message_keys' => is_array($message) ? array_keys($message) : [],
                     'keys' => is_array($payload) ? array_keys($payload) : [],
                 ]);
 
                 if ($attempt < $attempts) {
+                    // Model reasoning kadang menghabiskan seluruh kuota token
+                    // sebelum menulis jawaban akhir. Naikkan batas untuk
+                    // percobaan berikutnya.
+                    $currentMaxTokens = $this->escalateMaxTokens($currentMaxTokens);
+
                     $this->backoff($attempt, $delayMs);
 
                     continue;
@@ -121,8 +137,6 @@ class AiClient
 
                 return null;
             }
-
-            $this->recordUsage($user, $context, $payload['usage'] ?? []);
 
             return trim($content);
         }
@@ -140,6 +154,17 @@ class AiClient
         }
 
         usleep($baseMs * (2 ** ($attempt - 1)) * 1000);
+    }
+
+    /**
+     * Naikkan batas token keluaran untuk percobaan berikutnya, dengan batas atas
+     * agar tidak meminta jumlah yang tidak didukung model.
+     */
+    private function escalateMaxTokens(int $current): int
+    {
+        $cap = max(256, (int) config('ai.max_tokens_cap', 4096));
+
+        return min($cap, max($current + 512, $current * 2));
     }
 
     /**

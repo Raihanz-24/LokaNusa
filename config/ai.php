@@ -34,8 +34,14 @@ return [
     // Kreativitas balasan (0 = kaku, 1 = kreatif).
     'temperature' => (float) env('AI_TEMPERATURE', 0.7),
 
-    // Jumlah maksimum token keluaran (balasan asisten).
-    'max_tokens' => (int) env('AI_MAX_TOKENS', 800),
+    // Jumlah maksimum token keluaran (balasan asisten). Ini batas atas, bukan
+    // target; jawaban pendek tetap memakai token lebih sedikit. Nilai 800 terlalu
+    // kecil untuk model reasoning yang memakai `reasoning_content`.
+    'max_tokens' => (int) env('AI_MAX_TOKENS', 2000),
+
+    // Batas atas saat sistem otomatis menaikkan max_tokens karena jawaban
+    // kosong/terpotong (mis. model reasoning kehabisan kuota).
+    'max_tokens_cap' => (int) env('AI_MAX_TOKENS_CAP', 4096),
 
     // Batas token khusus saat AI menyusun itinerary terstruktur (JSON).
     // Lebih besar dari balasan biasa agar rencana multi-hari tidak terpotong.

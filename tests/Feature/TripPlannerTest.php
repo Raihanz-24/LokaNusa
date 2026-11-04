@@ -260,6 +260,43 @@ class TripPlannerTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_ai_menaikkan_batas_token_saat_jawaban_kosong_karena_reasoning(): void
+    {
+        config()->set('ai.base_url', 'https://ai.test/v1');
+        config()->set('ai.key', 'secret');
+        config()->set('ai.retries', 2);
+        config()->set('ai.retry_delay_ms', 0);
+        config()->set('ai.max_tokens', 800);
+        config()->set('ai.max_tokens_cap', 4096);
+
+        Http::fakeSequence()
+            ->push([
+                'choices' => [[
+                    'message' => ['content' => null, 'reasoning_content' => 'Analisis panjang...'],
+                    'finish_reason' => 'length',
+                ]],
+                'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 800, 'total_tokens' => 810],
+            ])
+            ->push([
+                'choices' => [['message' => ['content' => 'Jawaban akhir dari AI.']]],
+                'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 40, 'total_tokens' => 50],
+            ]);
+
+        $response = $this->actingAs($this->wisatawan())
+            ->postJson('/ai-trip-planner/kirim', ['message' => 'Apa itu Bromo?']);
+
+        $response->assertSuccessful();
+        $messages = $response->json('messages');
+
+        $this->assertSame('Jawaban akhir dari AI.', end($messages)['text']);
+        Http::assertSentCount(2);
+
+        $second = Http::recorded()[1][0];
+
+        $this->assertSame(1600, $second['max_tokens']);
+        $this->assertDatabaseCount('ai_usages', 2);
+    }
+
     public function test_ai_menerima_konten_berbentuk_array_bagian_teks(): void
     {
         config()->set('ai.base_url', 'https://ai.test/v1');

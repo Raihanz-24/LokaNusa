@@ -85,6 +85,9 @@ Sunting `.env` untuk **produksi**. Nilai penting:
 | `AI_BASE_URL` | `https://api.kryptonlab.id/v1` | gateway AI |
 | `AI_API_KEY` | `kl_liv_...` | **rahasia**, jangan commit |
 | `AI_MODEL` | `deepseek-v4.1-flash` | |
+| `AI_MAX_TOKENS` | `2000` (disarankan) | batas jawaban chat; `800` terlalu kecil untuk model reasoning |
+| `AI_PLAN_MAX_TOKENS` | `3500` | batas jawaban itinerary (JSON) |
+| `AI_RETRIES` | `3` | percobaan ulang saat 429/timeout/5xx |
 
 > ⚠️ `AI_API_KEY` berbeda antara lokal & server. Jangan pernah menaruhnya di kode/Git.
 > File `.env` sudah masuk `.gitignore`.
@@ -349,6 +352,7 @@ php artisan up
 | **Perubahan view tidak tampil** | `php artisan view:clear`. |
 | **Livewire error 419** | Pastikan `APP_URL` sesuai domain & HTTPS; session driver konsisten. |
 | **Reset sandi tidak terkirim** | Atur `MAIL_*` yang benar, lalu jalankan queue worker. |
+| **AI selalu "Layanan AI sedang sibuk"** | Jalankan `php artisan lokanusa:ai-check --max-tokens=3000`, lalu cek `storage/logs/laravel.log` untuk `AI request`/`AI response`. Jika `content_chars: 0` tetapi `reasoning_chars` besar → naikkan `AI_MAX_TOKENS=2000–4000`. Jika 401/403/404 → cek API key/model. Jika 429 → kuota penyedia. Jika timeout/5xx → jaringan server/penyedia. |
 
 ---
 
