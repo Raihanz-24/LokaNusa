@@ -236,6 +236,76 @@ class TripPlannerTest extends TestCase
         Http::assertSent(fn ($request) => str_contains($request->url(), '/chat/completions'));
     }
 
+    public function test_ai_mencoba_ulang_saat_penyedia_gangguan_sementara(): void
+    {
+        config()->set('ai.base_url', 'https://ai.test/v1');
+        config()->set('ai.key', 'secret');
+        config()->set('ai.retries', 3);
+        config()->set('ai.retry_delay_ms', 0);
+
+        Http::fakeSequence()
+            ->push('Service unavailable', 503)
+            ->push([
+                'choices' => [['message' => ['content' => 'Halo dari AI setelah retry!']]],
+                'usage' => ['prompt_tokens' => 12, 'completion_tokens' => 8, 'total_tokens' => 20],
+            ]);
+
+        $response = $this->actingAs($this->wisatawan())
+            ->postJson('/ai-trip-planner/kirim', ['message' => 'Halo']);
+
+        $response->assertSuccessful();
+        $messages = $response->json('messages');
+
+        $this->assertSame('Halo dari AI setelah retry!', end($messages)['text']);
+        Http::assertSentCount(2);
+    }
+
+    public function test_ai_menerima_konten_berbentuk_array_bagian_teks(): void
+    {
+        config()->set('ai.base_url', 'https://ai.test/v1');
+        config()->set('ai.key', 'secret');
+
+        Http::fake([
+            'ai.test/*' => Http::response([
+                'choices' => [['message' => ['content' => [
+                    ['type' => 'text', 'text' => 'Halo '],
+                    ['type' => 'text', 'text' => 'dari AI!'],
+                ]]]],
+            ]),
+        ]);
+
+        $response = $this->actingAs($this->wisatawan())
+            ->postJson('/ai-trip-planner/kirim', ['message' => 'Halo']);
+
+        $response->assertSuccessful();
+        $messages = $response->json('messages');
+
+        $this->assertSame('Halo dari AI!', end($messages)['text']);
+    }
+
+    public function test_ai_yang_gagal_total_memberi_pesan_jelas_bukan_template_minat(): void
+    {
+        config()->set('ai.base_url', 'https://ai.test/v1');
+        config()->set('ai.key', 'secret');
+        config()->set('ai.retries', 2);
+        config()->set('ai.retry_delay_ms', 0);
+
+        Http::fake([
+            'ai.test/*' => Http::response('Service down', 500),
+        ]);
+
+        $response = $this->actingAs($this->wisatawan())
+            ->postJson('/ai-trip-planner/kirim', ['message' => 'Apa itu Bromo?']);
+
+        $response->assertSuccessful();
+        $messages = $response->json('messages');
+        $text = end($messages)['text'];
+
+        $this->assertStringContainsString(__('ui.trip_planner_ai_unavailable'), $text);
+        $this->assertStringNotContainsString(__('ui.trip_planner_fallback', ['list' => '']), $text);
+        Http::assertSentCount(2);
+    }
+
     public function test_batas_token_per_pengguna_menolak_prompt(): void
     {
         config()->set('ai.base_url', 'https://ai.test/v1');

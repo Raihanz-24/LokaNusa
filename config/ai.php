@@ -25,6 +25,12 @@ return [
     // Batas waktu permintaan (detik).
     'timeout' => (int) env('AI_TIMEOUT', 60),
 
+    // Jumlah percobaan ulang saat jaringan/penyedia gangguan sementara.
+    'retries' => (int) env('AI_RETRIES', 3),
+
+    // Jeda dasar antar percobaan (milidetik); naik 2x tiap percobaan.
+    'retry_delay_ms' => (int) env('AI_RETRY_DELAY_MS', 400),
+
     // Kreativitas balasan (0 = kaku, 1 = kreatif).
     'temperature' => (float) env('AI_TEMPERATURE', 0.7),
 

@@ -113,6 +113,7 @@ return [
     'trip_planner_map' => 'You can see the locations of tourist spots on the Map page. Do you want me to include nearby stops in your plan?',
     'trip_planner_thanks' => 'You are welcome! Feel free to ask again whenever you want to continue planning.',
     'trip_planner_fallback' => 'Got it. To make the plan more focused, which interests do you prefer: :list?',
+    'trip_planner_ai_unavailable' => 'The AI service is busy or unreachable. Your message is saved — please try again in a moment.',
     'trip_planner_default_region' => 'your area',
     'trip_planner_cat_nature' => 'nature',
     'trip_planner_cat_culinary' => 'culinary',

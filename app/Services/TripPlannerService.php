@@ -225,7 +225,12 @@ class TripPlannerService
 
         // AI tidak tersedia -> balasan cadangan deterministik.
         if ($answer === null) {
-            return ['text' => $this->fallbackReply($text), 'plan' => null];
+            return [
+                'text' => $this->ai->configured()
+                    ? __('ui.trip_planner_ai_unavailable')
+                    : $this->fallbackReply($text),
+                'plan' => null,
+            ];
         }
 
         // Untuk permintaan itinerary, coba tafsirkan balasan sebagai JSON.

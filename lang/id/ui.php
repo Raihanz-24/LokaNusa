@@ -113,6 +113,7 @@ return [
     'trip_planner_map' => 'Lokasi tempat wisata bisa kamu lihat di halaman Peta. Mau saya masukkan titik-titik terdekat ke dalam rencanamu?',
     'trip_planner_thanks' => 'Dengan senang hati! Silakan tanya lagi kapan pun ingin melanjutkan rencana.',
     'trip_planner_fallback' => 'Baik. Supaya rencananya lebih terarah, minat mana yang kamu pilih: :list?',
+    'trip_planner_ai_unavailable' => 'Layanan AI sedang sibuk atau tidak dapat dihubungi. Pesanmu sudah tersimpan — silakan kirim ulang beberapa saat lagi.',
     'trip_planner_default_region' => 'daerahmu',
     'trip_planner_cat_nature' => 'alam',
     'trip_planner_cat_culinary' => 'kuliner',

@@ -21,6 +21,11 @@ use Throwable;
 class AiClient
 {
     /**
+     * Status HTTP yang layak dicoba ulang (gangguan sementara penyedia).
+     */
+    private const RETRYABLE_STATUSES = [408, 409, 425, 429, 500, 502, 503, 504];
+
+    /**
      * Apakah kredensial AI sudah terisi.
      */
     public function configured(): bool
@@ -31,6 +36,10 @@ class AiClient
     /**
      * Kirim percakapan dan kembalikan teks balasan, atau null bila gagal.
      *
+     * Permintaan diulang beberapa kali untuk gangguan sementara (timeout,
+     * koneksi putus, 429, 5xx) agar satu kegagalan jaringan tidak langsung
+     * memunculkan balasan template.
+     *
      * @param  array<int, array{role: string, content: string}>  $messages
      */
     public function chat(array $messages, ?User $user = null, string $context = 'trip_planner', ?int $maxTokens = null, ?float $temperature = null): ?string
@@ -39,38 +48,98 @@ class AiClient
             return null;
         }
 
-        try {
-            $response = Http::withToken((string) config('ai.key'))
-                ->acceptJson()
-                ->timeout((int) config('ai.timeout', 60))
-                ->post(rtrim((string) config('ai.base_url'), '/').'/chat/completions', [
-                    'model' => config('ai.model'),
-                    'messages' => $messages,
-                    'temperature' => $temperature ?? (float) config('ai.temperature', 0.7),
-                    'max_tokens' => $maxTokens ?? (int) config('ai.max_tokens', 800),
+        $attempts = min(5, max(1, (int) config('ai.retries', 3)));
+        $delayMs = min(5000, max(0, (int) config('ai.retry_delay_ms', 400)));
+
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            try {
+                $response = Http::withToken((string) config('ai.key'))
+                    ->acceptJson()
+                    ->timeout((int) config('ai.timeout', 60))
+                    ->post(rtrim((string) config('ai.base_url'), '/').'/chat/completions', [
+                        'model' => config('ai.model'),
+                        'messages' => $messages,
+                        'temperature' => $temperature ?? (float) config('ai.temperature', 0.7),
+                        'max_tokens' => $maxTokens ?? (int) config('ai.max_tokens', 800),
+                    ]);
+            } catch (Throwable $exception) {
+                Log::warning('AI request failed', [
+                    'attempt' => $attempt,
+                    'attempts' => $attempts,
+                    'exception' => $exception->getMessage(),
                 ]);
-        } catch (Throwable $exception) {
-            Log::warning('AI request failed', ['exception' => $exception->getMessage()]);
 
-            return null;
+                if ($attempt < $attempts) {
+                    $this->backoff($attempt, $delayMs);
+
+                    continue;
+                }
+
+                return null;
+            }
+
+            if (! $response->successful()) {
+                Log::warning('AI request rejected', [
+                    'attempt' => $attempt,
+                    'attempts' => $attempts,
+                    'status' => $response->status(),
+                    'body' => mb_substr($response->body(), 0, 500),
+                ]);
+
+                if ($attempt < $attempts && in_array($response->status(), self::RETRYABLE_STATUSES, true)) {
+                    $this->backoff($attempt, $delayMs);
+
+                    continue;
+                }
+
+                return null;
+            }
+
+            $payload = $response->json();
+            $content = data_get($payload, 'choices.0.message.content');
+
+            // Sebagian gateway mengirim content sebagai array bagian teks.
+            if (is_array($content)) {
+                $content = collect($content)
+                    ->map(fn ($part) => is_array($part) ? (string) ($part['text'] ?? '') : (string) $part)
+                    ->implode('');
+            }
+
+            if (! is_string($content) || trim($content) === '') {
+                Log::warning('AI response has no usable content', [
+                    'attempt' => $attempt,
+                    'attempts' => $attempts,
+                    'finish_reason' => data_get($payload, 'choices.0.finish_reason'),
+                    'keys' => is_array($payload) ? array_keys($payload) : [],
+                ]);
+
+                if ($attempt < $attempts) {
+                    $this->backoff($attempt, $delayMs);
+
+                    continue;
+                }
+
+                return null;
+            }
+
+            $this->recordUsage($user, $context, $payload['usage'] ?? []);
+
+            return trim($content);
         }
 
-        if (! $response->successful()) {
-            Log::warning('AI request rejected', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
+        return null;
+    }
 
-            return null;
+    /**
+     * Jeda sebelum percobaan berikutnya (bertambah perlahan).
+     */
+    private function backoff(int $attempt, int $baseMs): void
+    {
+        if ($baseMs <= 0) {
+            return;
         }
 
-        $payload = $response->json();
-
-        $this->recordUsage($user, $context, $payload['usage'] ?? []);
-
-        $content = data_get($payload, 'choices.0.message.content');
-
-        return is_string($content) ? trim($content) : null;
+        usleep($baseMs * (2 ** ($attempt - 1)) * 1000);
     }
 
     /**
