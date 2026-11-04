@@ -91,6 +91,9 @@ class PublicAccommodationTest extends TestCase
             ->assertSuccessful()
             ->assertSee('Pesan Kamar')
             ->assertSee('DEMO')
+            ->assertSee('BCA Virtual Account')
+            ->assertSee('QRIS')
+            ->assertSee('GoPay')
             ->assertDontSee('Pesan Sekarang');
     }
 

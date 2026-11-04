@@ -3,6 +3,42 @@
 @php
     $price = (int) ($accommodation->price_per_night ?? 0);
     $guestName = auth()->user()->name ?? '';
+
+    // Daftar metode pembayaran (tampilan demo, terinspirasi Snap/Midtrans).
+    $paymentGroups = [
+        [
+            'title' => 'Transfer Virtual Account',
+            'items' => [
+                ['group' => 'bank', 'id' => 'bca', 'label' => 'BCA Virtual Account', 'logo' => 'bca', 'prefix' => '39001', 'sub' => 'Virtual Account'],
+                ['group' => 'bank', 'id' => 'bni', 'label' => 'BNI Virtual Account', 'logo' => 'bni', 'prefix' => '88101', 'sub' => 'Virtual Account'],
+                ['group' => 'bank', 'id' => 'bri', 'label' => 'BRI Virtual Account', 'logo' => 'bri', 'prefix' => '77701', 'sub' => 'BRIVA'],
+                ['group' => 'bank', 'id' => 'mandiri', 'label' => 'Mandiri Virtual Account', 'logo' => 'mandiri', 'prefix' => '89501', 'sub' => 'Virtual Account'],
+                ['group' => 'bank', 'id' => 'permata', 'label' => 'Permata Virtual Account', 'logo' => 'permata', 'prefix' => '85601', 'sub' => 'Virtual Account'],
+            ],
+        ],
+        [
+            'title' => 'QRIS',
+            'items' => [
+                ['group' => 'qris', 'id' => 'qris', 'label' => 'QRIS', 'logo' => 'qris', 'prefix' => '0', 'sub' => 'Semua bank & e-wallet'],
+            ],
+        ],
+        [
+            'title' => 'E-Wallet',
+            'items' => [
+                ['group' => 'ewallet', 'id' => 'gopay', 'label' => 'GoPay', 'logo' => 'gopay', 'prefix' => '70001', 'sub' => 'Saldo GoPay'],
+                ['group' => 'ewallet', 'id' => 'ovo', 'label' => 'OVO', 'logo' => 'ovo', 'prefix' => '70002', 'sub' => 'Saldo OVO'],
+                ['group' => 'ewallet', 'id' => 'dana', 'label' => 'DANA', 'logo' => 'dana', 'prefix' => '70003', 'sub' => 'Saldo DANA'],
+                ['group' => 'ewallet', 'id' => 'shopeepay', 'label' => 'ShopeePay', 'logo' => 'shopeepay', 'prefix' => '70004', 'sub' => 'Saldo ShopeePay'],
+            ],
+        ],
+        [
+            'title' => 'Gerai Retail',
+            'items' => [
+                ['group' => 'retail', 'id' => 'alfamart', 'label' => 'Alfamart', 'logo' => 'alfamart', 'prefix' => '80001', 'sub' => 'Bayar di kasir'],
+                ['group' => 'retail', 'id' => 'indomaret', 'label' => 'Indomaret', 'logo' => 'indomaret', 'prefix' => '80002', 'sub' => 'Bayar di kasir'],
+            ],
+        ],
+    ];
 @endphp
 
 {{--
@@ -21,14 +57,11 @@
     <div data-demo-modal class="fixed inset-0 z-50 hidden">
         <div data-demo-backdrop class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
 
-        <div class="absolute inset-x-0 bottom-0 mx-auto max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:inset-0 sm:bottom-auto sm:top-1/2 sm:max-w-lg sm:-translate-y-1/2 sm:rounded-3xl">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-lg font-semibold text-slate-900">Pesan Kamar</h2>
-                        <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">DEMO</span>
-                    </div>
-                    <p class="mt-0.5 text-sm text-slate-500">{{ $accommodation->name }}</p>
+        <div class="absolute inset-x-0 bottom-0 mx-auto flex max-h-[94vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:inset-0 sm:bottom-auto sm:top-1/2 sm:max-w-2xl sm:-translate-y-1/2 sm:rounded-3xl">
+            <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-lg font-semibold text-slate-900">Pembayaran</h2>
+                    <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">DEMO</span>
                 </div>
                 <button type="button" data-demo-close
                         class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100"
@@ -37,158 +70,216 @@
                 </button>
             </div>
 
-            {{-- Langkah 1: detail menginap --}}
-            <div data-demo-step="1" class="mt-4 space-y-3">
-                <div class="grid grid-cols-2 gap-3">
+            <div class="min-h-0 flex-1 overflow-y-auto">
+                {{-- Langkah 1: detail menginap --}}
+                <div data-demo-step="1" class="space-y-3 p-5">
                     <div>
-                        <label class="text-sm font-medium text-slate-700" for="demo-start-{{ $accommodation->getKey() }}">Check-in</label>
-                        <input id="demo-start-{{ $accommodation->getKey() }}" type="date" data-demo-start
-                               class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        <p class="text-sm text-slate-500">Kamu memesan</p>
+                        <p class="font-semibold text-slate-900">{{ $accommodation->name }}</p>
                     </div>
-                    <div>
-                        <label class="text-sm font-medium text-slate-700" for="demo-end-{{ $accommodation->getKey() }}">Check-out</label>
-                        <input id="demo-end-{{ $accommodation->getKey() }}" type="date" data-demo-end
-                               class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    </div>
-                </div>
 
-                <div>
-                    <label class="text-sm font-medium text-slate-700" for="demo-name-{{ $accommodation->getKey() }}">Nama pemesan</label>
-                    <input id="demo-name-{{ $accommodation->getKey() }}" type="text" data-demo-name maxlength="100"
-                           value="{{ $guestName }}" placeholder="Nama lengkap"
-                           class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                </div>
-
-                <div>
-                    <label class="text-sm font-medium text-slate-700" for="demo-phone-{{ $accommodation->getKey() }}">No. HP / WhatsApp</label>
-                    <input id="demo-phone-{{ $accommodation->getKey() }}" type="tel" data-demo-phone maxlength="30"
-                           placeholder="08xxxxxxxxxx"
-                           class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                </div>
-
-                <div class="rounded-xl bg-slate-50 p-3 text-sm">
-                    <div class="flex items-center justify-between text-slate-600">
-                        <span>Harga / malam</span>
-                        <span class="font-medium text-slate-800">
-                            {{ $price > 0 ? 'Rp'.number_format($price, 0, ',', '.') : 'Belum tersedia' }}
-                        </span>
-                    </div>
-                    <div class="mt-1 flex items-center justify-between text-slate-600">
-                        <span>Jumlah malam</span>
-                        <span class="font-medium text-slate-800" data-demo-nights>—</span>
-                    </div>
-                    <div class="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
-                        <span class="font-semibold text-slate-700">Total (demo)</span>
-                        <span class="font-bold text-emerald-700" data-demo-total>—</span>
-                    </div>
-                </div>
-
-                <p data-demo-error class="hidden rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
-
-                <button type="button" data-demo-next
-                        class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                    Lanjut Pilih Pembayaran
-                </button>
-            </div>
-
-            {{-- Langkah 2: metode pembayaran --}}
-            <div data-demo-step="2" class="mt-4 hidden space-y-4">
-                <p class="text-sm text-slate-500">Pilih metode pembayaran simulasi:</p>
-
-                <div class="space-y-3">
-                    <div class="rounded-xl border border-slate-200 p-3">
-                        <p class="mb-2 text-sm font-semibold text-slate-800">Transfer Bank</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            @foreach (['bca' => 'BCA', 'bni' => 'BNI', 'bri' => 'BRI', 'mandiri' => 'Mandiri'] as $value => $label)
-                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:border-emerald-300">
-                                    <input type="radio" name="demo_method" value="bank:{{ $value }}" class="text-emerald-600 focus:ring-emerald-500">
-                                    {{ $label }}
-                                </label>
-                            @endforeach
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-sm font-medium text-slate-700" for="demo-start-{{ $accommodation->getKey() }}">Check-in</label>
+                            <input id="demo-start-{{ $accommodation->getKey() }}" type="date" data-demo-start
+                                   class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-slate-700" for="demo-end-{{ $accommodation->getKey() }}">Check-out</label>
+                            <input id="demo-end-{{ $accommodation->getKey() }}" type="date" data-demo-end
+                                   class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                         </div>
                     </div>
 
-                    <div class="rounded-xl border border-slate-200 p-3">
-                        <p class="mb-2 text-sm font-semibold text-slate-800">QRIS</p>
-                        <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:border-emerald-300">
-                            <input type="radio" name="demo_method" value="qris:qris" class="text-emerald-600 focus:ring-emerald-500">
-                            QRIS (semua bank &amp; e-wallet)
-                        </label>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700" for="demo-name-{{ $accommodation->getKey() }}">Nama pemesan</label>
+                        <input id="demo-name-{{ $accommodation->getKey() }}" type="text" data-demo-name maxlength="100"
+                               value="{{ $guestName }}" placeholder="Nama lengkap"
+                               class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                     </div>
 
-                    <div class="rounded-xl border border-slate-200 p-3">
-                        <p class="mb-2 text-sm font-semibold text-slate-800">E-Wallet</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            @foreach (['gopay' => 'GoPay', 'ovo' => 'OVO', 'dana' => 'DANA', 'shopeepay' => 'ShopeePay'] as $value => $label)
-                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:border-emerald-300">
-                                    <input type="radio" name="demo_method" value="ewallet:{{ $value }}" class="text-emerald-600 focus:ring-emerald-500">
-                                    {{ $label }}
-                                </label>
-                            @endforeach
+                    <div>
+                        <label class="text-sm font-medium text-slate-700" for="demo-phone-{{ $accommodation->getKey() }}">No. HP / WhatsApp</label>
+                        <input id="demo-phone-{{ $accommodation->getKey() }}" type="tel" data-demo-phone maxlength="30"
+                               placeholder="08xxxxxxxxxx"
+                               class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    </div>
+
+                    <div class="rounded-xl bg-slate-50 p-3 text-sm">
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>Harga / malam</span>
+                            <span class="font-medium text-slate-800">
+                                {{ $price > 0 ? 'Rp'.number_format($price, 0, ',', '.') : 'Belum tersedia' }}
+                            </span>
+                        </div>
+                        <div class="mt-1 flex items-center justify-between text-slate-600">
+                            <span>Jumlah malam</span>
+                            <span class="font-medium text-slate-800" data-demo-nights>—</span>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
+                            <span class="font-semibold text-slate-700">Total (demo)</span>
+                            <span class="font-bold text-emerald-700" data-demo-total>—</span>
                         </div>
                     </div>
-                </div>
 
-                <p data-demo-error class="hidden rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
+                    <p data-demo-error class="hidden rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
 
-                <div class="flex gap-2">
-                    <button type="button" data-demo-back
-                            class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                        Kembali
-                    </button>
-                    <button type="button" data-demo-pay
-                            class="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                        Buat Pembayaran Demo
-                    </button>
-                </div>
-            </div>
-
-            {{-- Langkah 3: hasil simulasi --}}
-            <div data-demo-step="3" class="mt-4 hidden space-y-3">
-                <div class="rounded-xl bg-emerald-50 p-4 text-center">
-                    <p class="text-sm font-medium text-emerald-800">Pesanan demo berhasil dibuat</p>
-                    <p class="mt-1 text-2xl font-bold text-emerald-700" data-demo-code>—</p>
-                    <p class="mt-1 text-xs text-emerald-700">Status: Menunggu Pembayaran (simulasi)</p>
-                </div>
-
-                <dl class="space-y-2 rounded-xl border border-slate-200 p-4 text-sm">
-                    <div class="flex items-center justify-between gap-3">
-                        <dt class="text-slate-500">Metode</dt>
-                        <dd class="text-right font-medium text-slate-800" data-demo-method>—</dd>
-                    </div>
-                    <div class="flex items-center justify-between gap-3">
-                        <dt class="text-slate-500">Menginap</dt>
-                        <dd class="text-right font-medium text-slate-800" data-demo-stay>—</dd>
-                    </div>
-                    <div class="flex items-center justify-between gap-3">
-                        <dt class="text-slate-500">Total</dt>
-                        <dd class="text-right font-bold text-emerald-700" data-demo-amount>—</dd>
-                    </div>
-                </dl>
-
-                <div data-demo-va-box class="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/50 p-4 text-center">
-                    <p class="text-xs font-medium uppercase tracking-wide text-emerald-700" data-demo-va-label>Nomor Virtual Account (Demo)</p>
-                    <p class="mt-1 break-all text-xl font-bold tracking-wider text-slate-900" data-demo-va>—</p>
-                    <button type="button" data-demo-copy
-                            class="mt-2 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
-                        Salin Nomor
+                    <button type="button" data-demo-next
+                            class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                        Lanjut Pilih Pembayaran
                     </button>
                 </div>
 
-                <div data-demo-qris-box class="hidden rounded-xl border border-dashed border-emerald-300 bg-white p-4 text-center">
-                    <p class="text-xs font-medium uppercase tracking-wide text-emerald-700">QRIS (Demo)</p>
-                    <div class="mx-auto mt-2 grid h-32 w-32 grid-cols-8 grid-rows-8 overflow-hidden rounded-lg border border-slate-200" data-demo-qris></div>
-                    <p class="mt-2 text-xs text-slate-500">Pindai hanya untuk tampilan — tidak ada tagihan.</p>
+                {{-- Langkah 2: daftar metode pembayaran --}}
+                <div data-demo-step="2" class="hidden">
+                    <div class="border-b border-slate-100 bg-slate-50 px-5 py-4">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-xs text-slate-500">Order ID</p>
+                                <p class="font-mono text-sm font-semibold text-slate-800" data-demo-code>—</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-slate-500">Total Pembayaran</p>
+                                <p class="text-lg font-bold text-slate-900" data-demo-total-2>—</p>
+                            </div>
+                        </div>
+                        <p class="mt-1.5 text-xs text-slate-500" data-demo-summary-stay>—</p>
+                    </div>
+
+                    <div class="space-y-5 p-5">
+                        @foreach ($paymentGroups as $group)
+                            <div>
+                                <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $group['title'] }}</h3>
+                                <div class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+                                    @foreach ($group['items'] as $item)
+                                        <button type="button" data-demo-method
+                                                data-group="{{ $item['group'] }}"
+                                                data-provider="{{ $item['id'] }}"
+                                                data-prefix="{{ $item['prefix'] }}"
+                                                data-label="{{ $item['label'] }}"
+                                                class="flex w-full items-center gap-3 bg-white px-4 py-3 text-left transition hover:bg-slate-50">
+                                            <span class="shrink-0">
+                                                <x-payment-logo :name="$item['logo']" />
+                                            </span>
+                                            <span class="min-w-0 flex-1">
+                                                <span class="block text-sm font-medium text-slate-800">{{ $item['label'] }}</span>
+                                                <span class="block text-xs text-slate-400">{{ $item['sub'] }}</span>
+                                            </span>
+                                            <x-heroicon name="chevron-right" class="h-4 w-4 shrink-0 text-slate-400" />
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <p class="rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-700">
+                            Mode <strong>DEMO</strong> — pilih metode mana pun. Tidak ada tagihan nyata.
+                        </p>
+                    </div>
+
+                    <div class="sticky bottom-0 border-t border-slate-100 bg-white p-4">
+                        <button type="button" data-demo-back
+                                class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                            Kembali
+                        </button>
+                    </div>
                 </div>
 
-                <p class="rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-700">
-                    Ini hanya <strong>simulasi</strong>. Tidak ada pesanan tersimpan, tidak ada tagihan, dan tidak terhubung ke admin.
-                </p>
+                {{-- Langkah 3: instruksi pembayaran --}}
+                <div data-demo-step="3" class="hidden p-5">
+                    <button type="button" data-demo-back-methods
+                            class="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:underline">
+                        <x-heroicon name="chevron-right" class="h-4 w-4 rotate-180" />
+                        Pilih metode lain
+                    </button>
 
-                <button type="button" data-demo-close
-                        class="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
-                    Selesai
-                </button>
+                    <div class="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                        <x-heroicon name="clock" class="h-4 w-4 shrink-0 text-slate-500" />
+                        <span>Selesaikan pembayaran dalam</span>
+                        <span class="font-mono font-bold text-slate-900" data-demo-timer>15:00</span>
+                    </div>
+
+                    <div class="mt-5 text-center">
+                        <p class="text-xs text-slate-500">Total Pembayaran</p>
+                        <p class="text-2xl font-bold text-slate-900" data-demo-amount>—</p>
+                        <p class="mt-1 font-mono text-xs text-slate-400" data-demo-code-3>—</p>
+                    </div>
+
+                    <div class="mt-5 rounded-xl border border-slate-200">
+                        <div class="flex items-center gap-3 border-b border-slate-100 p-4">
+                            <span class="shrink-0" data-demo-method-logo></span>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-slate-800" data-demo-method-label>—</p>
+                                <p class="text-xs text-slate-500" data-demo-method-sub>—</p>
+                            </div>
+                        </div>
+
+                        <div data-demo-number-box class="p-4 text-center">
+                            <p class="text-xs text-slate-500" data-demo-number-label>Nomor Virtual Account</p>
+                            <p class="mt-1 break-all font-mono text-xl font-bold tracking-wider text-slate-900" data-demo-number>—</p>
+                            <button type="button" data-demo-copy
+                                    class="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+                                <x-heroicon name="clipboard" class="h-3.5 w-3.5" />
+                                <span>Salin Nomor</span>
+                            </button>
+                            <p class="mt-2 text-xs text-slate-400">a.n. LokaNusa (Demo)</p>
+                        </div>
+
+                        <div data-demo-qris-box class="hidden p-4 text-center">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">QRIS</p>
+                            <div class="mx-auto mt-2 grid aspect-square w-44 overflow-hidden rounded-lg border border-slate-200 bg-white p-1.5" data-demo-qris></div>
+                            <p class="mt-2 text-xs text-slate-500">Pindai dengan aplikasi bank atau e-wallet apa pun.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <h3 class="text-sm font-semibold text-slate-900">Cara Pembayaran</h3>
+                        <ol data-demo-instructions class="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-slate-600"></ol>
+                    </div>
+
+                    <p class="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-700">
+                        Ini hanya <strong>simulasi</strong>. Nomor di atas fiktif dan tidak dapat dibayar sungguhan.
+                    </p>
+
+                    <button type="button" data-demo-paid
+                            class="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                        Saya Sudah Bayar (Demo)
+                    </button>
+                </div>
+
+                {{-- Langkah 4: berhasil --}}
+                <div data-demo-step="4" class="hidden p-6 text-center">
+                    <div class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100">
+                        <x-heroicon name="check-circle" class="h-10 w-10 text-emerald-600" />
+                    </div>
+                    <h2 class="mt-3 text-xl font-bold text-slate-900">Pembayaran Berhasil</h2>
+                    <p class="mt-1 text-sm text-slate-500">Status pesanan demo: <span class="font-semibold text-emerald-700">Lunas (simulasi)</span></p>
+                    <p class="mt-3 text-2xl font-bold text-slate-900" data-demo-amount-2>—</p>
+
+                    <dl class="mt-5 space-y-2 rounded-xl border border-slate-200 p-4 text-left text-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-slate-500">Order ID</dt>
+                            <dd class="font-mono font-medium text-slate-800" data-demo-code-4>—</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-slate-500">Metode</dt>
+                            <dd class="text-right font-medium text-slate-800" data-demo-method-4>—</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-slate-500">Menginap</dt>
+                            <dd class="text-right font-medium text-slate-800" data-demo-stay-4>—</dd>
+                        </div>
+                    </dl>
+
+                    <p class="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                        Tidak ada pesanan tersimpan dan tidak ada tagihan nyata. Ini hanya tampilan demo.
+                    </p>
+
+                    <button type="button" data-demo-close
+                            class="mt-4 w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+                        Selesai
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -197,13 +288,31 @@
 @once
     <script>
         (function () {
-            var PREFIX = {
-                bca: '39001', bni: '88101', bri: '77701', mandiri: '89501',
-                gopay: '70001', ovo: '70002', dana: '70003', shopeepay: '70004'
-            };
-            var LABEL = {
-                bca: 'Transfer BCA', bni: 'Transfer BNI', bri: 'Transfer BRI', mandiri: 'Transfer Mandiri',
-                qris: 'QRIS', gopay: 'GoPay', ovo: 'OVO', dana: 'DANA', shopeepay: 'ShopeePay'
+            var INSTRUCTIONS = {
+                bank: [
+                    'Buka aplikasi mobile banking atau ATM bank terkait.',
+                    'Pilih menu Transfer / Virtual Account.',
+                    'Masukkan nomor Virtual Account di atas.',
+                    'Periksa nominal tagihan, lalu konfirmasi pembayaran.'
+                ],
+                qris: [
+                    'Buka aplikasi bank atau e-wallet yang mendukung QRIS.',
+                    'Pilih menu Scan / Bayar QRIS.',
+                    'Pindai kode QR di atas.',
+                    'Periksa nominal, lalu konfirmasi pembayaran.'
+                ],
+                ewallet: [
+                    'Buka aplikasi e-wallet yang dipilih.',
+                    'Pilih menu Bayar / Transfer.',
+                    'Masukkan nomor pembayaran di atas.',
+                    'Periksa nominal, lalu konfirmasi pembayaran.'
+                ],
+                retail: [
+                    'Datang ke gerai retail terdekat.',
+                    'Sebutkan kode pembayaran di atas ke kasir.',
+                    'Bayar sesuai nominal tagihan.',
+                    'Simpan struk pembayaran sebagai bukti.'
+                ]
             };
 
             function rupiah(n) {
@@ -216,16 +325,29 @@
                 return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
             }
 
+            function randomDigits(n) {
+                var out = '';
+                for (var i = 0; i < n; i++) out += Math.floor(Math.random() * 10);
+                return out;
+            }
+
+            function groupDigits(value) {
+                return value.replace(/(\d{4})(?=\d)/g, '$1 ');
+            }
+
             function init(root) {
                 if (root.dataset.ready === '1') return;
                 root.dataset.ready = '1';
 
                 var price = Number(root.dataset.price || 0);
                 var modal = root.querySelector('[data-demo-modal]');
+                var panel = modal.querySelector(':scope > div:last-child');
+                var scroller = panel.querySelector('.overflow-y-auto');
                 var steps = {
                     1: root.querySelector('[data-demo-step="1"]'),
                     2: root.querySelector('[data-demo-step="2"]'),
-                    3: root.querySelector('[data-demo-step="3"]')
+                    3: root.querySelector('[data-demo-step="3"]'),
+                    4: root.querySelector('[data-demo-step="4"]')
                 };
                 var start = root.querySelector('[data-demo-start]');
                 var end = root.querySelector('[data-demo-end]');
@@ -234,6 +356,10 @@
                 var nightsEl = root.querySelector('[data-demo-nights]');
                 var totalEl = root.querySelector('[data-demo-total]');
                 var errorEl = steps[1].querySelector('[data-demo-error]');
+
+                var timerId = null;
+                var remaining = 15 * 60;
+                var current = null;
 
                 function localISO(d) {
                     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -251,6 +377,10 @@
                     var b = new Date(end.value + 'T00:00:00');
                     var n = Math.round((b - a) / 86400000);
                     return isNaN(n) ? 0 : n;
+                }
+
+                function amount() {
+                    return nights() * price;
                 }
 
                 function recalc() {
@@ -277,7 +407,7 @@
                     Object.keys(steps).forEach(function (key) {
                         steps[key].classList.toggle('hidden', Number(key) !== step);
                     });
-                    modal.scrollTop = 0;
+                    if (scroller) scroller.scrollTop = 0;
                 }
 
                 function open() {
@@ -286,14 +416,43 @@
                     show(1);
                 }
 
+                function stopTimer() {
+                    if (timerId) {
+                        clearInterval(timerId);
+                        timerId = null;
+                    }
+                }
+
+                function reset() {
+                    stopTimer();
+                    remaining = 15 * 60;
+                    current = null;
+                    root.querySelector('[data-demo-code]').textContent = '—';
+                    root.querySelector('[data-demo-code-3]').textContent = '—';
+                    root.querySelector('[data-demo-timer]').textContent = '15:00';
+                    root.querySelectorAll('[data-demo-method]').forEach(function (row) {
+                        row.classList.remove('bg-emerald-50');
+                    });
+                }
+
                 function close() {
                     modal.classList.add('hidden');
                     document.body.style.overflow = '';
+                    reset();
+                    show(1);
                 }
 
                 function fail(message) {
                     errorEl.textContent = message;
                     errorEl.classList.remove('hidden');
+                }
+
+                function summaryStay() {
+                    return fmtDate(start.value) + ' – ' + fmtDate(end.value) + ' · ' + nights() + ' malam';
+                }
+
+                function newCode() {
+                    return 'LK-DEMO-' + randomDigits(6);
                 }
 
                 root.querySelector('[data-demo-open]').addEventListener('click', open);
@@ -310,6 +469,12 @@
                     if (nights() < 1) return fail('Tanggal check-out harus setelah check-in.');
                     if (!name.value.trim()) return fail('Nama pemesan wajib diisi.');
                     if (!phone.value.trim() || phone.value.replace(/\D/g, '').length < 8) return fail('Nomor HP/WhatsApp tidak valid.');
+
+                    var code = newCode();
+                    root.dataset.code = code;
+                    root.querySelector('[data-demo-code]').textContent = code;
+                    root.querySelector('[data-demo-total-2]').textContent = price > 0 ? rupiah(amount()) : 'Harga belum tersedia';
+                    root.querySelector('[data-demo-summary-stay]').textContent = summaryStay();
                     show(2);
                 });
 
@@ -317,69 +482,161 @@
                     show(1);
                 });
 
-                root.querySelector('[data-demo-pay]').addEventListener('click', function () {
-                    var picked = root.querySelector('input[name="demo_method"]:checked');
-                    var error2 = steps[2].querySelector('[data-demo-error]');
-                    if (!picked) {
-                        error2.textContent = 'Silakan pilih metode pembayaran.';
-                        error2.classList.remove('hidden');
-                        return;
-                    }
-                    error2.classList.add('hidden');
-
-                    var parts = picked.value.split(':');
-                    var group = parts[0];
-                    var provider = parts[1];
-                    var n = nights();
-                    var amount = n * price;
-                    var code = 'LK-DEMO-' + String(Math.floor(100000 + Math.random() * 900000));
-
-                    root.querySelector('[data-demo-code]').textContent = code;
-                    root.querySelector('[data-demo-method]').textContent = LABEL[provider] || provider;
-                    root.querySelector('[data-demo-stay]').textContent = fmtDate(start.value) + ' – ' + fmtDate(end.value) + ' (' + n + ' malam)';
-                    root.querySelector('[data-demo-amount]').textContent = price > 0 ? rupiah(amount) : 'Harga belum tersedia';
-                    root.querySelector('[data-demo-va-label]').textContent = group === 'qris'
-                        ? 'Nomor Referensi (Demo)'
-                        : (group === 'ewallet' ? 'Nomor Pembayaran (Demo)' : 'Nomor Virtual Account (Demo)');
-
-                    if (group === 'qris') {
-                        root.querySelector('[data-demo-va-box]').classList.add('hidden');
-                        root.querySelector('[data-demo-qris-box]').classList.remove('hidden');
-                        renderQris(root.querySelector('[data-demo-qris]'), code);
-                    } else {
-                        var digits = '';
-                        for (var i = 0; i < 11; i++) digits += Math.floor(Math.random() * 10);
-                        var number = (PREFIX[provider] || '90001') + digits;
-                        root.querySelector('[data-demo-qris-box]').classList.add('hidden');
-                        root.querySelector('[data-demo-va-box]').classList.remove('hidden');
-                        root.querySelector('[data-demo-va]').textContent = number.replace(/(\d{4})(?=\d)/g, '$1 ');
-                        root.querySelector('[data-demo-va]').dataset.raw = number;
-                    }
-
-                    show(3);
+                root.querySelector('[data-demo-back-methods]').addEventListener('click', function () {
+                    stopTimer();
+                    show(2);
                 });
 
+                root.querySelectorAll('[data-demo-method]').forEach(function (row) {
+                    row.addEventListener('click', function () {
+                        root.querySelectorAll('[data-demo-method]').forEach(function (other) {
+                            other.classList.remove('bg-emerald-50');
+                        });
+                        row.classList.add('bg-emerald-50');
+                        current = row;
+                        buildPayment(row);
+                        show(3);
+                    });
+                });
+
+                function startTimer() {
+                    stopTimer();
+                    remaining = 15 * 60;
+                    var timerEl = root.querySelector('[data-demo-timer]');
+
+                    function paint() {
+                        var minutes = Math.floor(remaining / 60);
+                        var seconds = remaining % 60;
+                        timerEl.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+                    }
+
+                    paint();
+                    timerId = setInterval(function () {
+                        remaining -= 1;
+                        if (remaining <= 0) {
+                            remaining = 0;
+                            paint();
+                            stopTimer();
+                            return;
+                        }
+                        paint();
+                    }, 1000);
+                }
+
+                function buildPayment(row) {
+                    var group = row.dataset.group;
+                    var provider = row.dataset.provider;
+                    var prefix = row.dataset.prefix || '';
+                    var label = row.dataset.label;
+
+                    root.querySelector('[data-demo-amount]').textContent = price > 0 ? rupiah(amount()) : 'Harga belum tersedia';
+                    root.querySelector('[data-demo-code-3]').textContent = root.dataset.code || '';
+                    root.querySelector('[data-demo-method-logo]').innerHTML = row.querySelector('svg').outerHTML;
+                    root.querySelector('[data-demo-method-label]').textContent = label;
+                    root.querySelector('[data-demo-method-sub]').textContent = group === 'bank'
+                        ? 'Virtual Account'
+                        : (group === 'qris' ? 'Scan kode QR' : (group === 'retail' ? 'Kode pembayaran' : 'Nomor pembayaran'));
+
+                    var numberBox = root.querySelector('[data-demo-number-box]');
+                    var qrisBox = root.querySelector('[data-demo-qris-box]');
+                    var numberEl = root.querySelector('[data-demo-number]');
+
+                    if (group === 'qris') {
+                        numberBox.classList.add('hidden');
+                        qrisBox.classList.remove('hidden');
+                        renderQris(root.querySelector('[data-demo-qris]'), root.dataset.code || label);
+                    } else {
+                        qrisBox.classList.add('hidden');
+                        numberBox.classList.remove('hidden');
+
+                        var digits;
+                        if (group === 'bank') {
+                            digits = (prefix + randomDigits(11)).slice(0, 16);
+                            root.querySelector('[data-demo-number-label]').textContent = 'Nomor Virtual Account';
+                        } else if (group === 'retail') {
+                            digits = (prefix + randomDigits(9)).slice(0, 14);
+                            root.querySelector('[data-demo-number-label]').textContent = 'Kode Pembayaran';
+                        } else {
+                            digits = (prefix + randomDigits(9)).slice(0, 14);
+                            root.querySelector('[data-demo-number-label]').textContent = 'Nomor Pembayaran';
+                        }
+
+                        numberEl.dataset.raw = digits;
+                        numberEl.textContent = groupDigits(digits);
+                    }
+
+                    var list = root.querySelector('[data-demo-instructions]');
+                    list.innerHTML = '';
+                    (INSTRUCTIONS[group] || INSTRUCTIONS.bank).forEach(function (text) {
+                        var li = document.createElement('li');
+                        li.textContent = text;
+                        list.appendChild(li);
+                    });
+
+                    startTimer();
+                }
+
                 function renderQris(container, seed) {
-                    container.innerHTML = '';
+                    var size = 25;
+                    var cells = [];
                     var hash = 0;
                     for (var i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) % 100000;
-                    for (var c = 0; c < 64; c++) {
+
+                    function rnd() {
                         hash = (hash * 1103515245 + 12345) % 2147483648;
-                        var cell = document.createElement('span');
-                        cell.className = (hash % 3 === 0) ? 'bg-slate-900' : 'bg-white';
-                        container.appendChild(cell);
+                        return hash;
                     }
+
+                    for (var c = 0; c < size * size; c++) cells[c] = (rnd() % 100) < 47;
+
+                    function set(x, y, value) {
+                        if (x >= 0 && x < size && y >= 0 && y < size) cells[y * size + x] = value;
+                    }
+
+                    function finder(ox, oy) {
+                        for (var y = 0; y < 8; y++) {
+                            for (var x = 0; x < 8; x++) set(ox + x, oy + y, false);
+                        }
+                        for (var fy = 0; fy < 7; fy++) {
+                            for (var fx = 0; fx < 7; fx++) {
+                                var border = fx === 0 || fx === 6 || fy === 0 || fy === 6;
+                                var center = fx >= 2 && fx <= 4 && fy >= 2 && fy <= 4;
+                                set(ox + fx, oy + fy, border || center);
+                            }
+                        }
+                    }
+
+                    finder(0, 0);
+                    finder(size - 7, 0);
+                    finder(0, size - 7);
+
+                    container.innerHTML = '';
+                    container.style.gridTemplateColumns = 'repeat(' + size + ', minmax(0, 1fr))';
+                    container.style.gridTemplateRows = 'repeat(' + size + ', minmax(0, 1fr))';
+
+                    cells.forEach(function (dark) {
+                        var cell = document.createElement('span');
+                        cell.style.backgroundColor = dark ? '#0f172a' : '#ffffff';
+                        container.appendChild(cell);
+                    });
                 }
 
                 root.querySelector('[data-demo-copy]').addEventListener('click', function () {
-                    var el = root.querySelector('[data-demo-va]');
+                    var el = root.querySelector('[data-demo-number]');
                     var value = (el.dataset.raw || el.textContent).replace(/\s/g, '');
                     var button = this;
+
                     function done() {
-                        var old = button.textContent;
-                        button.textContent = 'Tersalin';
-                        setTimeout(function () { button.textContent = old; }, 1500);
+                        var label = button.querySelector('span');
+                        var old = label ? label.textContent : button.textContent;
+                        if (label) label.textContent = 'Tersalin';
+                        else button.textContent = 'Tersalin';
+                        setTimeout(function () {
+                            if (label) label.textContent = old;
+                            else button.textContent = old;
+                        }, 1500);
                     }
+
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         navigator.clipboard.writeText(value).then(done).catch(done);
                     } else {
@@ -391,6 +648,16 @@
                         document.body.removeChild(input);
                         done();
                     }
+                });
+
+                root.querySelector('[data-demo-paid]').addEventListener('click', function () {
+                    stopTimer();
+                    var label = current ? current.dataset.label : '—';
+                    root.querySelector('[data-demo-amount-2]').textContent = price > 0 ? rupiah(amount()) : 'Harga belum tersedia';
+                    root.querySelector('[data-demo-code-4]').textContent = root.dataset.code || '—';
+                    root.querySelector('[data-demo-method-4]').textContent = label;
+                    root.querySelector('[data-demo-stay-4]').textContent = summaryStay();
+                    show(4);
                 });
             }
 
