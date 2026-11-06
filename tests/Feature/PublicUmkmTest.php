@@ -93,11 +93,20 @@ class PublicUmkmTest extends TestCase
             'unit' => 'pack',
         ]);
 
+        UmkmProduct::factory()->create([
+            'umkm_business_id' => $business->id,
+            'name' => 'Keripik Pedas Sedang Habis',
+            'price' => 12000,
+            'is_available' => false,
+        ]);
+
         $this->actingAs($this->wisatawan())->get('/umkm/'.$business->slug)
             ->assertSuccessful()
             ->assertSee('Beli Produk')
             ->assertSee('GoPay')
             ->assertSee('images/payments/bca.svg', false)
+            ->assertSee('Stok Habis')
+            ->assertSee('Produk ini sedang tidak tersedia.')
             ->assertDontSee('Beli Sekarang');
     }
 

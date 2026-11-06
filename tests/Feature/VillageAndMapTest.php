@@ -75,6 +75,9 @@ class VillageAndMapTest extends TestCase
             ->assertSuccessful()
             ->assertSee('Pantai Peta')
             ->assertSee('Warung Peta')
+            ->assertSee('Lokasi saya')
+            ->assertSee('explore-locate', false)
+            ->assertSee('navigator.geolocation', false)
             ->assertDontSee('Destinasi Draf Peta');
     }
 
